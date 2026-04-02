@@ -38,6 +38,7 @@ import {
   getLegStatusBadgeVariant,
   getTripStatusBadgeVariant,
 } from "@/components/trips/format";
+import { formatTripLeg, formatTripRoute } from "@/components/trips/trip-name";
 import type { TripDetails } from "@/components/trips/types";
 
 type TripDetailProps = {
@@ -143,7 +144,7 @@ export function TripDetail({ trip }: TripDetailProps) {
                   {trip.name}
                 </CardTitle>
                 <CardDescription className="max-w-3xl text-base leading-7">
-                  {trip.stops.map((stop) => stop.name).join(" -> ")}
+                  {formatTripRoute(trip.stops.map((stop) => stop.name))}
                 </CardDescription>
               </div>
 
@@ -238,7 +239,10 @@ export function TripDetail({ trip }: TripDetailProps) {
                 </p>
                 <p className="mt-2 font-medium">
                   {trip.activeLeg
-                    ? `${trip.activeLeg.fromStopName} -> ${trip.activeLeg.toStopName}`
+                    ? formatTripLeg(
+                        trip.activeLeg.fromStopName,
+                        trip.activeLeg.toStopName,
+                      )
                     : "Not started yet"}
                 </p>
               </div>
@@ -311,7 +315,7 @@ export function TripDetail({ trip }: TripDetailProps) {
                             </Badge>
                           </div>
                           <p className="font-medium">
-                            {`${leg.fromStopName} -> ${leg.toStopName}`}
+                            {formatTripLeg(leg.fromStopName, leg.toStopName)}
                           </p>
                         </div>
                         <p className="text-sm text-muted-foreground">

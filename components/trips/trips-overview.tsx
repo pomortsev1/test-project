@@ -14,6 +14,7 @@ import {
   getLegStatusBadgeVariant,
   getTripStatusBadgeVariant,
 } from "@/components/trips/format";
+import { formatTripRoute } from "@/components/trips/trip-name";
 import type { TripListItem } from "@/components/trips/types";
 
 type LegacyTrip = {
@@ -45,7 +46,7 @@ export function TripsOverview({ trips }: { trips: Array<TripListItem | LegacyTri
         const routeLabel =
           "routeLabel" in trip
             ? trip.routeLabel
-            : trip.stops.map((stop) => stop.name).join(" -> ");
+            : formatTripRoute(trip.stops.map((stop) => stop.name));
         const templateName =
           "templateName" in trip && trip.templateName ? trip.templateName : "Snapshot only";
 

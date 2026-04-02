@@ -7,7 +7,12 @@ import {
   PACKMAP_USER_ID_COOKIE,
   SESSION_USER_ID_COOKIE_NAMES,
 } from "@/lib/domain/constants";
-import { resolveTripName, normalizeTripDestinationName } from "@/components/trips/trip-name";
+import {
+  formatTripLeg,
+  formatTripRoute,
+  normalizeTripDestinationName,
+  resolveTripName,
+} from "@/components/trips/trip-name";
 import {
   getCurrentSessionIdentity,
   getCurrentUserId as getCurrentSessionUserId,
@@ -513,7 +518,7 @@ function buildChecklistSelection(
   return {
     legId: fallbackLeg.id,
     status: fallbackLeg.status,
-    routeLabel: `${fallbackLeg.fromStopName} -> ${fallbackLeg.toStopName}`,
+    routeLabel: formatTripLeg(fallbackLeg.fromStopName, fallbackLeg.toStopName),
     packedCount,
     totalCount: selectedChecks.length || tripItems.length,
     groups: [...groups.values()],
@@ -562,7 +567,7 @@ function buildTripListItems(
         updatedAt: trip.updated_at,
         stops: tripStops,
         legs: tripLegs,
-        routeLabel: tripStops.map((stop) => stop.name).join(" -> "),
+        routeLabel: formatTripRoute(tripStops.map((stop) => stop.name)),
         activeLeg,
         completedLegs: tripLegs.filter((leg) => leg.status === "completed").length,
         totalLegs: tripLegs.length,

@@ -82,16 +82,60 @@ function createLeg(
 function buildTemplates(): PackingTemplate[] {
   return [
     {
-      id: "template-weekend-city-break",
-      name: "Weekend city break",
-      isDefault: true,
-      itemCount: 6,
-      items: createTemplateItems("template-weekend-city-break", [
+      id: "template-two-hour-trip",
+      name: "2-hour trip",
+      isDefault: false,
+      itemCount: 4,
+      items: createTemplateItems("template-two-hour-trip", [
         {
-          itemName: "Passport",
+          itemName: "Keys",
+          categoryName: "Misc",
+          quantity: null,
+          unit: null,
+        },
+        {
+          itemName: "Wallet",
           categoryName: "Documents",
-          quantity: 1,
-          unit: "document",
+          quantity: null,
+          unit: null,
+        },
+        {
+          itemName: "Mobile phone",
+          categoryName: "Tech",
+          quantity: null,
+          unit: null,
+        },
+        {
+          itemName: "Water bottle",
+          categoryName: "Misc",
+          quantity: null,
+          unit: null,
+        },
+      ]),
+    },
+    {
+      id: "template-one-day-trip",
+      name: "1-day trip essentials",
+      isDefault: true,
+      itemCount: 8,
+      items: createTemplateItems("template-one-day-trip", [
+        {
+          itemName: "Wallet",
+          categoryName: "Documents",
+          quantity: null,
+          unit: null,
+        },
+        {
+          itemName: "ID card",
+          categoryName: "Documents",
+          quantity: null,
+          unit: null,
+        },
+        {
+          itemName: "Mobile phone",
+          categoryName: "Tech",
+          quantity: null,
+          unit: null,
         },
         {
           itemName: "Phone charger",
@@ -100,54 +144,164 @@ function buildTemplates(): PackingTemplate[] {
           unit: "charger",
         },
         {
-          itemName: "T-shirts",
-          categoryName: "Clothes",
-          quantity: 3,
-          unit: "shirts",
+          itemName: "Keys",
+          categoryName: "Misc",
+          quantity: null,
+          unit: null,
         },
         {
-          itemName: "Socks",
-          categoryName: "Clothes",
-          quantity: 4,
-          unit: "pairs",
-        },
-        {
-          itemName: "Toothbrush",
-          categoryName: "Toiletries",
-          quantity: 1,
-          unit: "brush",
+          itemName: "Water bottle",
+          categoryName: "Misc",
+          quantity: null,
+          unit: null,
         },
         {
           itemName: "Medication",
           categoryName: "Health",
           quantity: 1,
-          unit: "kit",
+          unit: "pack",
+        },
+        {
+          itemName: "Sunglasses",
+          categoryName: "Misc",
+          quantity: null,
+          unit: null,
         },
       ]),
     },
     {
-      id: "template-remote-work-week",
-      name: "Remote work week",
+      id: "template-one-night-trip",
+      name: "1-night light pack",
       isDefault: false,
-      itemCount: 5,
-      items: createTemplateItems("template-remote-work-week", [
+      itemCount: 12,
+      items: createTemplateItems("template-one-night-trip", [
         {
-          itemName: "Laptop",
-          categoryName: "Tech",
-          quantity: 1,
-          unit: "device",
+          itemName: "Wallet",
+          categoryName: "Documents",
+          quantity: null,
+          unit: null,
         },
         {
-          itemName: "USB-C charger",
+          itemName: "ID card",
+          categoryName: "Documents",
+          quantity: null,
+          unit: null,
+        },
+        {
+          itemName: "Mobile phone",
+          categoryName: "Tech",
+          quantity: null,
+          unit: null,
+        },
+        {
+          itemName: "Phone charger",
           categoryName: "Tech",
           quantity: 1,
           unit: "charger",
         },
         {
-          itemName: "Notebook",
+          itemName: "Keys",
           categoryName: "Misc",
+          quantity: null,
+          unit: null,
+        },
+        {
+          itemName: "T-shirts",
+          categoryName: "Clothes",
           quantity: 1,
-          unit: "notebook",
+          unit: "t-shirt",
+        },
+        {
+          itemName: "Socks",
+          categoryName: "Clothes",
+          quantity: 1,
+          unit: "pair",
+        },
+        {
+          itemName: "Underwear",
+          categoryName: "Clothes",
+          quantity: 1,
+          unit: "pair",
+        },
+        {
+          itemName: "Toothbrush",
+          categoryName: "Toiletries",
+          quantity: null,
+          unit: null,
+        },
+        {
+          itemName: "Toothpaste",
+          categoryName: "Toiletries",
+          quantity: 1,
+          unit: "tube",
+        },
+        {
+          itemName: "Deodorant",
+          categoryName: "Toiletries",
+          quantity: null,
+          unit: null,
+        },
+        {
+          itemName: "Pajamas",
+          categoryName: "Clothes",
+          quantity: 1,
+          unit: "set",
+        },
+      ]),
+    },
+    {
+      id: "template-one-week-carry-on",
+      name: "1-week carry-on",
+      isDefault: false,
+      itemCount: 18,
+      items: createTemplateItems("template-one-week-carry-on", [
+        {
+          itemName: "Passport",
+          categoryName: "Documents",
+          quantity: null,
+          unit: null,
+        },
+        {
+          itemName: "Wallet",
+          categoryName: "Documents",
+          quantity: null,
+          unit: null,
+        },
+        {
+          itemName: "Mobile phone",
+          categoryName: "Tech",
+          quantity: null,
+          unit: null,
+        },
+        {
+          itemName: "Phone charger",
+          categoryName: "Tech",
+          quantity: 1,
+          unit: "charger",
+        },
+        {
+          itemName: "Power bank",
+          categoryName: "Tech",
+          quantity: null,
+          unit: null,
+        },
+        {
+          itemName: "T-shirts",
+          categoryName: "Clothes",
+          quantity: 5,
+          unit: "t-shirts",
+        },
+        {
+          itemName: "Underwear",
+          categoryName: "Clothes",
+          quantity: 7,
+          unit: "pairs",
+        },
+        {
+          itemName: "Socks",
+          categoryName: "Clothes",
+          quantity: 7,
+          unit: "pairs",
         },
         {
           itemName: "Trousers",
@@ -156,36 +310,174 @@ function buildTemplates(): PackingTemplate[] {
           unit: "pairs",
         },
         {
-          itemName: "Headphones",
-          categoryName: "Tech",
-          quantity: 1,
-          unit: "pair",
-        },
-      ]),
-    },
-    {
-      id: "template-summer-escape",
-      name: "Summer escape",
-      isDefault: false,
-      itemCount: 4,
-      items: createTemplateItems("template-summer-escape", [
-        {
-          itemName: "Swimwear",
+          itemName: "Shorts",
           categoryName: "Clothes",
           quantity: 2,
-          unit: "sets",
+          unit: "pairs",
         },
         {
-          itemName: "Sunscreen",
-          categoryName: "Health",
+          itemName: "Hoodie",
+          categoryName: "Clothes",
+          quantity: 1,
+          unit: "hoodie",
+        },
+        {
+          itemName: "Lightweight jacket",
+          categoryName: "Clothes",
+          quantity: 1,
+          unit: "jacket",
+        },
+        {
+          itemName: "Toothbrush",
+          categoryName: "Toiletries",
+          quantity: null,
+          unit: null,
+        },
+        {
+          itemName: "Toothpaste",
+          categoryName: "Toiletries",
           quantity: 1,
           unit: "tube",
         },
         {
-          itemName: "Water bottle",
-          categoryName: "Misc",
+          itemName: "Deodorant",
+          categoryName: "Toiletries",
+          quantity: null,
+          unit: null,
+        },
+        {
+          itemName: "Travel-size Shampoo",
+          categoryName: "Toiletries",
           quantity: 1,
           unit: "bottle",
+        },
+        {
+          itemName: "Medication",
+          categoryName: "Health",
+          quantity: 1,
+          unit: "pack",
+        },
+        {
+          itemName: "Laundry bag",
+          categoryName: "Misc",
+          quantity: null,
+          unit: null,
+        },
+      ]),
+    },
+    {
+      id: "template-extended-trip-with-baggage",
+      name: "1+ week with baggage",
+      isDefault: false,
+      itemCount: 25,
+      items: createTemplateItems("template-extended-trip-with-baggage", [
+        {
+          itemName: "Passport",
+          categoryName: "Documents",
+          quantity: null,
+          unit: null,
+        },
+        {
+          itemName: "Boarding pass",
+          categoryName: "Documents",
+          quantity: null,
+          unit: null,
+        },
+        {
+          itemName: "Wallet",
+          categoryName: "Documents",
+          quantity: null,
+          unit: null,
+        },
+        {
+          itemName: "Mobile phone",
+          categoryName: "Tech",
+          quantity: null,
+          unit: null,
+        },
+        {
+          itemName: "Phone charger",
+          categoryName: "Tech",
+          quantity: 1,
+          unit: "charger",
+        },
+        {
+          itemName: "Power bank",
+          categoryName: "Tech",
+          quantity: null,
+          unit: null,
+        },
+        {
+          itemName: "Laptop",
+          categoryName: "Tech",
+          quantity: null,
+          unit: null,
+        },
+        {
+          itemName: "Laptop charger",
+          categoryName: "Tech",
+          quantity: 1,
+          unit: "charger",
+        },
+        {
+          itemName: "Travel adapter",
+          categoryName: "Tech",
+          quantity: 1,
+          unit: "adapter",
+        },
+        {
+          itemName: "T-shirts",
+          categoryName: "Clothes",
+          quantity: 7,
+          unit: "t-shirts",
+        },
+        {
+          itemName: "Underwear",
+          categoryName: "Clothes",
+          quantity: 10,
+          unit: "pairs",
+        },
+        {
+          itemName: "Socks",
+          categoryName: "Clothes",
+          quantity: 10,
+          unit: "pairs",
+        },
+        {
+          itemName: "Trousers",
+          categoryName: "Clothes",
+          quantity: 3,
+          unit: "pairs",
+        },
+        {
+          itemName: "Shorts",
+          categoryName: "Clothes",
+          quantity: 3,
+          unit: "pairs",
+        },
+        {
+          itemName: "Hoodie",
+          categoryName: "Clothes",
+          quantity: 1,
+          unit: "hoodie",
+        },
+        {
+          itemName: "Lightweight jacket",
+          categoryName: "Clothes",
+          quantity: 1,
+          unit: "jacket",
+        },
+        {
+          itemName: "Pajamas",
+          categoryName: "Clothes",
+          quantity: 1,
+          unit: "set",
+        },
+        {
+          itemName: "Walking shoes",
+          categoryName: "Clothes",
+          quantity: 1,
+          unit: "pair",
         },
         {
           itemName: "Sandals",
@@ -193,14 +485,53 @@ function buildTemplates(): PackingTemplate[] {
           quantity: 1,
           unit: "pair",
         },
+        {
+          itemName: "Toothbrush",
+          categoryName: "Toiletries",
+          quantity: null,
+          unit: null,
+        },
+        {
+          itemName: "Toothpaste",
+          categoryName: "Toiletries",
+          quantity: 1,
+          unit: "tube",
+        },
+        {
+          itemName: "Deodorant",
+          categoryName: "Toiletries",
+          quantity: null,
+          unit: null,
+        },
+        {
+          itemName: "Sunscreen",
+          categoryName: "Toiletries",
+          quantity: 1,
+          unit: "bottle",
+        },
+        {
+          itemName: "Travel-size Body wash",
+          categoryName: "Toiletries",
+          quantity: 1,
+          unit: "bottle",
+        },
+        {
+          itemName: "Medication",
+          categoryName: "Health",
+          quantity: 1,
+          unit: "pack",
+        },
       ]),
     },
   ];
 }
 
 function buildTrips(templates: PackingTemplate[]): Trip[] {
-  const defaultTemplate = templates[0];
-  const workTemplate = templates[1];
+  const defaultTemplate = templates.find((template) => template.isDefault) ?? templates[0];
+  const workTemplate =
+    templates.find((template) => template.id === "template-one-week-carry-on") ??
+    templates.find((template) => !template.isDefault) ??
+    templates[0];
 
   const activeStops = createStops("trip-andalusia", [
     "Home",
@@ -224,7 +555,7 @@ function buildTrips(templates: PackingTemplate[]): Trip[] {
         activeStops[0].name,
         activeStops[1].name,
         defaultTemplate.items,
-        ["Passport", "Phone charger", "T-shirts", "Socks"]
+        ["Wallet", "Mobile phone", "Phone charger", "Keys"]
       ),
       createLeg(
         "trip-andalusia",
@@ -233,7 +564,7 @@ function buildTrips(templates: PackingTemplate[]): Trip[] {
         activeStops[1].name,
         activeStops[2].name,
         defaultTemplate.items,
-        ["Passport", "Phone charger", "Medication"]
+        ["Wallet", "Phone charger", "Medication"]
       ),
       createLeg(
         "trip-andalusia",
@@ -250,7 +581,7 @@ function buildTrips(templates: PackingTemplate[]): Trip[] {
   const draftStops = createStops("trip-porto", ["Home", "Porto", "Home"]);
   const draftTrip: Trip = {
     id: "trip-porto",
-    name: "Porto long weekend",
+    name: "Porto work week",
     mode: "simple",
     status: "draft",
     templateName: workTemplate.name,
@@ -295,7 +626,7 @@ function buildTrips(templates: PackingTemplate[]): Trip[] {
         completedStops[0].name,
         completedStops[1].name,
         defaultTemplate.items,
-        ["Passport", "Phone charger", "T-shirts", "Socks", "Toothbrush"]
+        ["Wallet", "ID card", "Mobile phone", "Phone charger", "Medication"]
       ),
       createLeg(
         "trip-berlin",
@@ -304,7 +635,7 @@ function buildTrips(templates: PackingTemplate[]): Trip[] {
         completedStops[1].name,
         completedStops[2].name,
         defaultTemplate.items,
-        ["Passport", "Phone charger", "T-shirts", "Socks", "Toothbrush"]
+        ["Wallet", "ID card", "Mobile phone", "Phone charger", "Medication"]
       ),
     ],
   };

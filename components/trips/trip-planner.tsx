@@ -15,7 +15,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { formatTripMode } from "@/components/trips/format";
-import { buildTripNameFromDestinations } from "@/components/trips/trip-name";
+import {
+  buildTripNameFromDestinations,
+  formatTripRoute,
+} from "@/components/trips/trip-name";
 import type { TripMode, TripTemplateOption } from "@/components/trips/types";
 
 type TripPlannerProps = {
@@ -146,8 +149,8 @@ export function TripPlanner({ templates }: TripPlannerProps) {
                   </div>
                   <p className="mt-2 text-sm text-muted-foreground">
                     {nextMode === "simple"
-                      ? "Home -> Destination -> Home"
-                      : "Home -> Stop 1 -> Stop 2 -> Home"}
+                      ? "Home → Destination → Home"
+                      : "Home → Stop 1 → Stop 2 → Home"}
                   </p>
                 </button>
               );
@@ -213,7 +216,7 @@ export function TripPlanner({ templates }: TripPlannerProps) {
         <div className="rounded-2xl border border-border/70 bg-muted/40 p-4">
           <p className="text-sm font-medium">Route preview</p>
           <p className="mt-2 text-sm text-muted-foreground">
-            {["Home", ...visibleStops.filter(Boolean), "Home"].join(" -> ")}
+            {formatTripRoute(["Home", ...visibleStops.filter(Boolean), "Home"])}
           </p>
         </div>
 

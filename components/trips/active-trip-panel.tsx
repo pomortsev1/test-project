@@ -12,6 +12,7 @@ import {
   formatTripItemMeasurement,
   formatTripMode,
 } from "@/components/trips/format";
+import { formatTripLeg } from "@/components/trips/trip-name";
 import type { TripDetails } from "@/components/trips/types";
 import type { Trip as DashboardTrip } from "@/lib/domain/types";
 
@@ -62,9 +63,8 @@ export function ActiveTripPanel({
           <div className="space-y-2">
             <CardTitle className="text-xl sm:text-2xl">{trip.name}</CardTitle>
             <CardDescription className="max-w-2xl text-sm leading-6">
-              Current leg: {activeLegacyLeg.fromStopName}
-              {" -> "}
-              {activeLegacyLeg.toStopName}.
+              Current leg:{" "}
+              {formatTripLeg(activeLegacyLeg.fromStopName, activeLegacyLeg.toStopName)}.
             </CardDescription>
           </div>
         </CardHeader>
@@ -105,10 +105,9 @@ export function ActiveTripPanel({
         <div className="space-y-2">
           <CardTitle className="text-xl sm:text-2xl">{trip.name}</CardTitle>
           <CardDescription className="max-w-2xl text-sm leading-6">
-            Current leg: {trip.activeLeg.fromStopName}
-            {" -> "}
-            {trip.activeLeg.toStopName}. {trip.checklistPackedCount} of{" "}
-            {trip.checklistTotalCount} items packed for this move.
+            Current leg: {formatTripLeg(trip.activeLeg.fromStopName, trip.activeLeg.toStopName)}.{" "}
+            {trip.checklistPackedCount} of {trip.checklistTotalCount} items packed for this
+            move.
           </CardDescription>
         </div>
       </CardHeader>

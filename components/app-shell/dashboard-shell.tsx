@@ -8,6 +8,7 @@ import {
   CardHeader,
 } from "@/components/ui/card";
 import { ActiveTripPanel } from "@/components/trips/active-trip-panel";
+import { formatTripLeg } from "@/components/trips/trip-name";
 import { TripsOverview } from "@/components/trips/trips-overview";
 import { TemplatesOverview } from "@/components/templates/templates-overview";
 import type { DashboardData } from "@/lib/domain/types";
@@ -36,9 +37,10 @@ export function DashboardShell({ data }: { data: DashboardData }) {
       ? "Open your default template."
       : "Create your first packing list.";
   const heroDescription = data.activeTrip
-    ? `${data.activeTrip.name}: ${activeLeg?.fromStopName ?? "Current stop"} -> ${
-        activeLeg?.toStopName ?? "next stop"
-      }. ${packedCount} of ${totalCount} items packed for this move.`
+    ? `${data.activeTrip.name}: ${formatTripLeg(
+        activeLeg?.fromStopName ?? "Current stop",
+        activeLeg?.toStopName ?? "next stop",
+      )}. ${packedCount} of ${totalCount} items packed for this move.`
     : defaultTemplate
       ? `${defaultTemplate.name} already has ${defaultTemplate.itemCount} items ready to tune before you plan the trip.`
       : "Create one template so every trip starts from a real packing list.";
@@ -87,9 +89,10 @@ export function DashboardShell({ data }: { data: DashboardData }) {
           <div className="flex flex-wrap gap-2 text-sm">
             {data.activeTrip ? (
               <div className="rounded-full border border-white/15 bg-white/10 px-3 py-2 text-slate-100">
-                {activeLeg?.fromStopName ?? "Current stop"}
-                {" -> "}
-                {activeLeg?.toStopName ?? "next stop"}
+                {formatTripLeg(
+                  activeLeg?.fromStopName ?? "Current stop",
+                  activeLeg?.toStopName ?? "next stop",
+                )}
               </div>
             ) : null}
             {defaultTemplate ? (

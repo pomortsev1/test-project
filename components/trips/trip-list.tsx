@@ -17,6 +17,7 @@ import {
   getLegStatusBadgeVariant,
   getTripStatusBadgeVariant,
 } from "@/components/trips/format";
+import { formatTripLeg } from "@/components/trips/trip-name";
 import type { TripListItem } from "@/components/trips/types";
 
 type TripListProps = {
@@ -106,7 +107,7 @@ export function TripList({ trips, activeTripId }: TripListProps) {
                       variant={getLegStatusBadgeVariant(leg.status)}
                       className="gap-1.5"
                     >
-                      {`${leg.fromStopName} -> ${leg.toStopName}`}
+                      {formatTripLeg(leg.fromStopName, leg.toStopName)}
                     </Badge>
                   ))}
                 </div>
@@ -120,7 +121,7 @@ export function TripList({ trips, activeTripId }: TripListProps) {
                     </p>
                     <p className="mt-1 font-medium">
                       {currentLeg
-                        ? `${currentLeg.fromStopName} -> ${currentLeg.toStopName}`
+                        ? formatTripLeg(currentLeg.fromStopName, currentLeg.toStopName)
                         : "Route pending"}
                     </p>
                   </div>
