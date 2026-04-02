@@ -136,8 +136,7 @@ export async function GET(request: NextRequest) {
     }
   } catch (error) {
     console.error("[google-auth] finalize failed", {
-      message:
-        error instanceof Error ? error.message : "Unable to finalize the Google session.",
+      message: error 
     });
     return NextResponse.redirect(
       getErrorRedirectUrl(

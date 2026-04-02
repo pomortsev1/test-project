@@ -22,6 +22,11 @@ export function AppShellLayout({
 }: AppShellLayoutProps) {
   const isGoogleSession = sessionIdentity?.authMode === "google";
   const workspaceLabel = isGoogleSession ? "Google workspace" : "Guest workspace";
+  const googleLabel = sessionIdentity?.label ?? "Signed in";
+  const googleEmail =
+    sessionIdentity?.email && sessionIdentity.email !== googleLabel
+      ? sessionIdentity.email
+      : null;
 
   return (
     <div className="packing-stage min-h-screen text-slate-950">
@@ -45,9 +50,14 @@ export function AppShellLayout({
                   {workspaceLabel}
                 </span>
                 {isGoogleSession ? (
-                  <span className="inline-flex max-w-full items-center gap-1 truncate">
+                  <span className="inline-flex max-w-full items-center gap-2">
                     <Mail className="size-3.5 shrink-0" />
-                    {sessionIdentity?.email ?? sessionIdentity?.label ?? "Signed in"}
+                    <span className="truncate font-medium text-slate-700">
+                      {googleLabel}
+                    </span>
+                    {googleEmail ? (
+                      <span className="truncate text-slate-500">{googleEmail}</span>
+                    ) : null}
                   </span>
                 ) : (
                   <span>Saved on this browser</span>
