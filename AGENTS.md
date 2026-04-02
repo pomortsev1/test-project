@@ -12,3 +12,10 @@ When finishing implementation work in this repository:
 - Tell the user whether they need to push database updates, run migrations, seed data, regenerate types, reinstall dependencies, or execute any other manual commands.
 - If any follow-up action is required, provide the exact command to run.
 - If no follow-up action is required, say that explicitly.
+
+# Supabase Workflow
+
+- This project uses Supabase as the managed database service.
+- For future database-related work, prefer the Supabase CLI via `npx supabase`.
+- Do not assume a globally installed Supabase CLI is available on this machine.
+- Use `npx supabase` to reduce the user's manual work and command execution as much as possible.
