@@ -166,7 +166,15 @@ export function getSafeNextPath(nextPath: string | null | undefined, fallback = 
     return fallback;
   }
 
+  if (nextPath.startsWith("/auth/google")) {
+    return fallback;
+  }
+
   if (nextPath.startsWith("/auth/callback")) {
+    return fallback;
+  }
+
+  if (nextPath.startsWith("/auth/finalize")) {
     return fallback;
   }
 

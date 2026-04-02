@@ -1,6 +1,6 @@
 import { createServerClient, type CookieMethodsServer } from "@supabase/ssr";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { NextRequest, NextResponse } from "next/server";
+import type { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 
 import type { Database } from "@/lib/supabase/database.types";
@@ -34,24 +34,25 @@ export async function createSupabaseServerClient(): Promise<SupabaseClient<Datab
   });
 }
 
-export function createSupabaseRouteHandlerClient(
-  request: NextRequest,
+export async function createSupabaseRouteHandlerClient(
   response: NextResponse
-): SupabaseClient<Database> | null {
+): Promise<SupabaseClient<Database> | null> {
   const { url, publishableKey, isConfigured } = getSupabaseEnv();
 
   if (!isConfigured || !url || !publishableKey) {
     return null;
   }
 
+  const cookieStore = await cookies();
+
   return createServerClient(url, publishableKey, {
     cookies: {
       getAll() {
-        return request.cookies.getAll();
+        return cookieStore.getAll();
       },
       setAll(cookiesToSet) {
         cookiesToSet.forEach(({ name, value, options }) => {
-          request.cookies.set(name, value);
+          cookieStore.set(name, value, options);
           response.cookies.set(name, value, options);
         });
       },

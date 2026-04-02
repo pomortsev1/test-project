@@ -2,7 +2,6 @@ import Link from "next/link";
 import { ArrowRight, ShieldCheck } from "lucide-react";
 import { redirect } from "next/navigation";
 
-import { GoogleAuthComplete } from "@/components/auth/google-auth-complete";
 import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -31,7 +30,6 @@ export default async function Home({
     getCurrentSessionIdentity(),
     searchParams,
   ]);
-
   const authCodeValue = Array.isArray(params.code) ? params.code[0] : params.code;
   const providerErrorValue = Array.isArray(params.error) ? params.error[0] : params.error;
   const providerErrorDescriptionValue = Array.isArray(params.error_description)
@@ -41,14 +39,22 @@ export default async function Home({
   const nextPath = getSafeNextPath(nextValue, "/dashboard");
 
   if (authCodeValue || providerErrorValue || providerErrorDescriptionValue) {
-    return (
-      <GoogleAuthComplete
-        authCode={authCodeValue ?? null}
-        error={providerErrorValue ?? null}
-        errorDescription={providerErrorDescriptionValue ?? null}
-        nextPath={nextPath}
-      />
-    );
+    const callbackUrl = new URL("/auth/callback", "http://localhost");
+    callbackUrl.searchParams.set("next", nextPath);
+
+    if (authCodeValue) {
+      callbackUrl.searchParams.set("code", authCodeValue);
+    }
+
+    if (providerErrorValue) {
+      callbackUrl.searchParams.set("error", providerErrorValue);
+    }
+
+    if (providerErrorDescriptionValue) {
+      callbackUrl.searchParams.set("error_description", providerErrorDescriptionValue);
+    }
+
+    redirect(callbackUrl.pathname + callbackUrl.search);
   }
 
   if (identity) {
@@ -120,6 +126,7 @@ export default async function Home({
               ) : null}
 
               <Button
+                nativeButton={false}
                 className="h-11 w-full rounded-xl"
                 render={<Link href={getBootstrapPath(nextPath)} />}
               >

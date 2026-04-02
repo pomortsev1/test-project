@@ -16,11 +16,7 @@ export function createSupabaseBrowserClient() {
   }
 
   if (!browserClient) {
-    browserClient = createBrowserClient(url, publishableKey, {
-      auth: {
-        detectSessionInUrl: false,
-      },
-    });
+    browserClient = createBrowserClient(url, publishableKey);
   }
 
   return browserClient;

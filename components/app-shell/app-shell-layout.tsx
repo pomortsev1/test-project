@@ -62,6 +62,7 @@ export function AppShellLayout({
                   />
                 ) : (
                   <Button
+                    nativeButton={false}
                     variant="outline"
                     size="sm"
                     className="rounded-full bg-white/80"

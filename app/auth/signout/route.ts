@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
       : getAuthChoicePath(nextPath);
   const response = NextResponse.redirect(new URL(destination, request.url));
   response.headers.set("Cache-Control", "private, no-store");
-  const supabase = createSupabaseRouteHandlerClient(request, response);
+  const supabase = await createSupabaseRouteHandlerClient(response);
 
   if (supabase) {
     await supabase.auth.signOut({ scope: "local" });

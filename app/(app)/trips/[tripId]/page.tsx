@@ -32,7 +32,9 @@ export default async function TripDetailPage({ params }: TripDetailPageProps) {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button render={<Link href="/trips" />}>Back to trips</Button>
+              <Button nativeButton={false} render={<Link href="/trips" />}>
+                Back to trips
+              </Button>
             </CardContent>
           </Card>
         </main>
