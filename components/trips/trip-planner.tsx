@@ -54,13 +54,12 @@ export function TripPlanner({ templates }: TripPlannerProps) {
               Plan a trip
             </CardTitle>
             <CardDescription>
-              Build a route from a saved template, then snapshot its items into a
-              draft trip.
+              Pick a template, name the trip, and add your stops.
             </CardDescription>
           </div>
           <Badge variant="outline" className="gap-1.5">
             <Route className="size-3.5" />
-            Two planning modes
+            Default template first
           </Badge>
         </div>
       </CardHeader>
@@ -96,6 +95,11 @@ export function TripPlanner({ templates }: TripPlannerProps) {
                 </option>
               ))}
             </select>
+            <p className="text-xs text-muted-foreground">
+              {templates.some((template) => template.isDefault)
+                ? "The default template is selected first."
+                : "Choose any saved template for this trip."}
+            </p>
           </label>
         </div>
 
@@ -135,7 +139,7 @@ export function TripPlanner({ templates }: TripPlannerProps) {
                   <p className="mt-2 text-sm text-muted-foreground">
                     {nextMode === "simple"
                       ? "Home -> Destination -> Home"
-                      : "Home -> Stop 1 -> Stop 2 -> ... -> Home"}
+                      : "Home -> Stop 1 -> Stop 2 -> Home"}
                   </p>
                 </button>
               );
@@ -213,8 +217,8 @@ export function TripPlanner({ templates }: TripPlannerProps) {
 
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="text-sm text-muted-foreground">
-            Checklist items are copied from the selected template, so later
-            template edits won&apos;t change this trip.
+            Items are copied when you create the trip, so later template edits
+            won&apos;t change this checklist.
           </p>
           <Button
             type="button"

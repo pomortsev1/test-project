@@ -10,6 +10,7 @@ import type {
 import type {
   DashboardData,
   PackingItemSnapshot,
+  QuantityValue,
   PackingTemplate,
   Trip,
   TripChecklistItem,
@@ -19,18 +20,18 @@ import type {
 import { ensureProfileForCurrentUser } from "@/lib/session";
 import { getSupabaseEnv } from "@/lib/supabase/env";
 
+type DashboardPackingItemSeed = {
+  categoryName: string;
+  itemName: string;
+} & QuantityValue;
+
 function createTemplateItems(
   prefix: string,
-  items: Array<{
-    itemName: string;
-    categoryName: string;
-    quantity: number;
-    unit: string;
-  }>
+  items: DashboardPackingItemSeed[],
 ): PackingItemSnapshot[] {
   return items.map((item, index) => ({
-    id: `${prefix}-item-${index + 1}`,
     ...item,
+    id: `${prefix}-item-${index + 1}`,
   }));
 }
 
@@ -343,14 +344,25 @@ function mapTripListItem(trip: TripListItem): Trip {
 
 function mapTripDetails(details: TripDetails): Trip {
   const checklistItems = details.checklistGroups.flatMap((group) =>
-    group.items.map((item) => ({
-      id: item.tripItemId,
-      itemName: item.itemName,
-      categoryName: item.categoryName,
-      quantity: item.quantity,
-      unit: item.unit,
-      isPacked: item.isPacked,
-    }))
+    group.items.map((item) =>
+      item.quantity !== null && item.unit !== null
+        ? {
+            id: item.tripItemId,
+            itemName: item.itemName,
+            categoryName: item.categoryName,
+            quantity: item.quantity,
+            unit: item.unit,
+            isPacked: item.isPacked,
+          }
+        : {
+            id: item.tripItemId,
+            itemName: item.itemName,
+            categoryName: item.categoryName,
+            quantity: null,
+            unit: null,
+            isPacked: item.isPacked,
+          },
+    )
   );
 
   return {

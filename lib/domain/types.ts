@@ -21,16 +21,31 @@ export type Profile = ProfileRecord;
 export type Category = CategoryRecord;
 export type CatalogItem = CatalogItemRecord;
 
-export interface QuantityValue {
-  quantity: number;
-  unit: string;
-}
+export type QuantityValue =
+  | {
+      quantity: number;
+      unit: string;
+    }
+  | {
+      quantity: null;
+      unit: null;
+    };
 
-export interface PackingItemSnapshot extends QuantityValue {
+export type QuantityInputValue =
+  | {
+      quantity: number;
+      unit: string;
+    }
+  | {
+      quantity?: null;
+      unit?: null;
+    };
+
+export type PackingItemSnapshot = QuantityValue & {
   categoryName: string;
   id: string;
   itemName: string;
-}
+};
 
 export interface PackingTemplate {
   id: string;
@@ -40,9 +55,9 @@ export interface PackingTemplate {
   name: string;
 }
 
-export interface TripChecklistItem extends PackingItemSnapshot {
+export type TripChecklistItem = PackingItemSnapshot & {
   isPacked: boolean;
-}
+};
 
 export interface TripStop {
   id: string;
@@ -106,7 +121,7 @@ export interface TripRecordDetails {
   trip: TripRecord;
 }
 
-export interface TemplateItemInput extends QuantityValue {
+interface TemplateItemInputBase {
   catalogItemId?: string | null;
   categoryId?: string;
   categoryName?: string;
@@ -114,6 +129,8 @@ export interface TemplateItemInput extends QuantityValue {
   saveToCatalog?: boolean;
   sortOrder?: number;
 }
+
+export type TemplateItemInput = TemplateItemInputBase & QuantityInputValue;
 
 export interface TripStopInput {
   name: string;

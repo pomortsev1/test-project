@@ -11,7 +11,7 @@ import {
   getSafeNextPath,
   isSessionUserId,
 } from "@/lib/session";
-import { createSupabaseRouteHandlerClient } from "@/lib/supabase/server";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 function getErrorRedirectUrl(request: NextRequest, nextPath: string, message: string) {
   const redirectUrl = new URL(getAuthChoicePath(nextPath), request.url);
@@ -27,11 +27,19 @@ export async function GET(request: NextRequest) {
     "/dashboard"
   );
   const anonymousUserId = request.cookies.get(PACKING_APP_USER_ID_COOKIE)?.value ?? null;
+  const cookieNames = request.cookies.getAll().map((cookie) => cookie.name);
   const response = NextResponse.redirect(new URL(nextPath, request.url));
   response.headers.set("Cache-Control", "private, no-store");
   response.cookies.delete(PACKING_APP_AUTH_NEXT_COOKIE);
 
-  const supabase = await createSupabaseRouteHandlerClient(response);
+  console.info("[google-auth] finalize request", {
+    anonymousUserIdPresent: Boolean(anonymousUserId),
+    cookieNames,
+    nextPath,
+    url: request.url,
+  });
+
+  const supabase = await createSupabaseServerClient();
 
   if (!supabase) {
     return NextResponse.redirect(
@@ -121,6 +129,10 @@ export async function GET(request: NextRequest) {
       )
     );
   }
+
+  console.info("[google-auth] finalize response cookies", {
+    cookieNames: response.cookies.getAll().map((cookie) => cookie.name),
+  });
 
   return response;
 }

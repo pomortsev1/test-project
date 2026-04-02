@@ -30,8 +30,9 @@
 2. User creates a template with a name.
 3. Template starts empty or can be copied from default later if the implementation chooses.
 4. User adds items through autocomplete or free typing.
-5. Each item stores category, quantity, unit, and sort order.
-6. User can mark the template as default.
+5. Each item stores category, sort order, and an optional measurement pair.
+6. Single-instance items can omit both quantity and unit.
+7. User can mark the template as default.
 
 ## Add Item Flow
 1. User opens add-item UI.
@@ -41,7 +42,9 @@
    - existing suggestion
    - new item with selected category
 5. If it is a new item, UI offers to save it to the user catalog.
-6. Selected or created item is inserted into the template with quantity and unit.
+6. Selected or created item is inserted into the template with either:
+   - `quantity + unit`
+   - no measurement for obvious single items
 
 ## Create Trip
 1. User starts from template selection.
@@ -69,7 +72,7 @@
 
 ## Active Leg Checklist
 1. User sees current route, for example `Home -> Barcelona`.
-2. User sees grouped checklist items with quantity and unit.
+2. User sees grouped checklist items with measurement only when present.
 3. User toggles packed state per item.
 4. Progress feedback should make it obvious how many items remain.
 

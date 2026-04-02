@@ -1,5 +1,6 @@
 import {
   getCategoryOptionsForCurrentUser,
+  getTemplateEditorCapabilities,
   getTemplateDetails,
 } from "@/app/actions/templates";
 import { TemplateEditor } from "@/components/templates/template-editor";
@@ -13,9 +14,10 @@ export default async function TemplateDetailPage({
   params: Promise<{ templateId: string }>;
 }) {
   const { templateId } = await params;
-  const [detailState, categoriesState] = await Promise.all([
+  const [detailState, categoriesState, capabilities] = await Promise.all([
     getTemplateDetails(templateId),
     getCategoryOptionsForCurrentUser(),
+    getTemplateEditorCapabilities(),
   ]);
 
   if (!detailState.detail) {
@@ -26,13 +28,10 @@ export default async function TemplateDetailPage({
         </CardHeader>
         <CardContent className="space-y-3 text-sm leading-6 text-muted-foreground">
           <p>
-            This template may have been deleted, or the current Google or
-            anonymous workspace does not own it.
+            This template may have been deleted, or this workspace does not own
+            it.
           </p>
-          <p>
-            Choose another template from the list on the left or create a new
-            one.
-          </p>
+          <p>Pick the default template on the left to keep going.</p>
         </CardContent>
       </Card>
     );
@@ -45,6 +44,7 @@ export default async function TemplateDetailPage({
       categories={categoriesState.categories}
       canMutate={detailState.hasSession && detailState.isConfigured}
       issue={detailState.issue ?? categoriesState.issue}
+      supportsOptionalMeasurements={capabilities.supportsOptionalMeasurements}
     />
   );
 }

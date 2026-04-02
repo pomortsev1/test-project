@@ -49,6 +49,7 @@ type TemplateEditorProps = {
   categories: CategoryOption[];
   canMutate: boolean;
   issue?: string;
+  supportsOptionalMeasurements: boolean;
 };
 
 type ItemRowProps = {
@@ -56,12 +57,14 @@ type ItemRowProps = {
   templateId: string;
   categoryNames: string[];
   canMutate: boolean;
+  supportsOptionalMeasurements: boolean;
 };
 
 type AddItemComposerProps = {
   templateId: string;
   categories: CategoryOption[];
   canMutate: boolean;
+  supportsOptionalMeasurements: boolean;
 };
 
 function normalizeClientText(value: string) {
@@ -86,19 +89,58 @@ function scopeLabel(scope: CatalogSuggestion["scope"] | CategoryOption["scope"])
   return scope === "user" ? "Saved" : "System";
 }
 
+function getMeasurementHelperCopy(supportsOptionalMeasurements: boolean) {
+  if (supportsOptionalMeasurements) {
+    return "Leave both blank for one-off items like Passport or Wallet.";
+  }
+
+  return "Measurements are still required in this workspace, so use simple values like 1 item or 1 document for single essentials.";
+}
+
+function parseQuantityInput(value: string) {
+  const cleaned = value.trim();
+
+  if (!cleaned) {
+    return null;
+  }
+
+  return Number(cleaned);
+}
+
+function parseUnitInput(value: string) {
+  const cleaned = value.trim();
+  return cleaned.length > 0 ? cleaned : null;
+}
+
+function resolveMeasurementInput(
+  quantity: string,
+  unit: string,
+  fallbackUnit?: string,
+) {
+  const parsedQuantity = parseQuantityInput(quantity);
+  const parsedUnit = parseUnitInput(unit);
+  const defaultUnit = parseUnitInput(fallbackUnit ?? "");
+
+  return {
+    quantity: parsedQuantity,
+    unit: parsedQuantity !== null ? parsedUnit ?? defaultUnit : parsedUnit,
+  };
+}
+
 function EditableTemplateItemRow({
   item,
   templateId,
   categoryNames,
   canMutate,
+  supportsOptionalMeasurements,
 }: ItemRowProps) {
   const router = useRouter();
   const categoryListId = useId();
   const [draft, setDraft] = useState({
     itemName: item.itemName,
     categoryName: item.categoryName,
-    quantity: String(item.quantity),
-    unit: item.unit,
+    quantity: item.quantity === null ? "" : String(item.quantity),
+    unit: item.unit ?? "",
   });
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -196,13 +238,17 @@ function EditableTemplateItemRow({
               setMessage(null);
 
               startTransition(async () => {
+                const measurement = resolveMeasurementInput(
+                  draft.quantity,
+                  draft.unit,
+                );
                 const result = await updateTemplateItem({
                   templateId,
                   templateItemId: item.id,
                   itemName: draft.itemName,
                   categoryName: draft.categoryName,
-                  quantity: Number(draft.quantity),
-                  unit: draft.unit,
+                  quantity: measurement.quantity,
+                  unit: measurement.unit,
                 });
 
                 if (!result.ok) {
@@ -260,6 +306,11 @@ function EditableTemplateItemRow({
       {!error && message ? (
         <p className="mt-3 text-sm text-muted-foreground">{message}</p>
       ) : null}
+      {!error && !message && !supportsOptionalMeasurements ? (
+        <p className="mt-3 text-xs leading-5 text-muted-foreground">
+          {getMeasurementHelperCopy(false)}
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -268,6 +319,7 @@ function AddTemplateItemComposer({
   templateId,
   categories,
   canMutate,
+  supportsOptionalMeasurements,
 }: AddItemComposerProps) {
   const router = useRouter();
   const requestIdRef = useRef(0);
@@ -275,7 +327,9 @@ function AddTemplateItemComposer({
   const [selectedSuggestion, setSelectedSuggestion] =
     useState<CatalogSuggestion | null>(null);
   const [suggestions, setSuggestions] = useState<CatalogSuggestion[]>([]);
-  const [quantity, setQuantity] = useState("1");
+  const [quantity, setQuantity] = useState(
+    supportsOptionalMeasurements ? "" : "1",
+  );
   const [unit, setUnit] = useState("");
   const [rawSelectedCategoryValue, setRawSelectedCategoryValue] = useState(
     categories[0]?.id ?? NEW_CATEGORY_VALUE,
@@ -329,13 +383,13 @@ function AddTemplateItemComposer({
             <WandSparkles className="size-3.5" />
             Add item
           </Badge>
-          <Badge variant="secondary">
-            {selectedSuggestion ? "Using suggestion" : "Custom or suggested"}
-          </Badge>
         </div>
-        <CardTitle className="text-lg">
-          Autocomplete from system and saved catalog items
-        </CardTitle>
+        <div className="space-y-2">
+          <CardTitle className="text-lg">Add another item</CardTitle>
+          <p className="text-sm leading-6 text-muted-foreground">
+            Search the catalog or type your own item for this template.
+          </p>
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1.3fr)_120px_150px]">
@@ -416,7 +470,7 @@ function AddTemplateItemComposer({
 
           <div className="space-y-2">
             <label className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
-              Quantity
+              Quantity {supportsOptionalMeasurements ? "(optional)" : ""}
             </label>
             <input
               type="number"
@@ -425,31 +479,33 @@ function AddTemplateItemComposer({
               value={quantity}
               disabled={isDisabled}
               onChange={(event) => setQuantity(event.target.value)}
+              placeholder={supportsOptionalMeasurements ? "1" : undefined}
               className="h-11 w-full rounded-xl border border-border/80 bg-background px-3 text-sm outline-none transition focus:border-foreground/30 focus:ring-4 focus:ring-foreground/5 disabled:cursor-not-allowed disabled:opacity-60"
             />
           </div>
 
           <div className="space-y-2">
             <label className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
-              Unit
+              Unit {supportsOptionalMeasurements ? "(optional)" : ""}
             </label>
             <input
               value={unit}
               disabled={isDisabled}
               onChange={(event) => setUnit(event.target.value)}
-              placeholder="pairs"
+              placeholder={supportsOptionalMeasurements ? "pairs" : "pairs"}
               className="h-11 w-full rounded-xl border border-border/80 bg-background px-3 text-sm outline-none transition focus:border-foreground/30 focus:ring-4 focus:ring-foreground/5 disabled:cursor-not-allowed disabled:opacity-60"
             />
           </div>
         </div>
 
+        <p className="text-sm leading-6 text-muted-foreground">
+          {getMeasurementHelperCopy(supportsOptionalMeasurements)}
+        </p>
+
         {selectedSuggestion ? (
           <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-border/70 bg-muted/35 px-4 py-3 text-sm text-muted-foreground">
             <Badge variant="secondary">{suggestionCategories}</Badge>
-            <span>
-              Clear the match by editing the name if you want to add a truly
-              custom item.
-            </span>
+            <span>Edit the name if you want to break away from this match.</span>
           </div>
         ) : (
           <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
@@ -508,8 +564,8 @@ function AddTemplateItemComposer({
                 onChange={(event) => setSaveToCatalog(event.target.checked)}
                 className="mt-1 size-4 rounded border-border"
               />
-              Save this custom item into the user catalog so it appears in
-              autocomplete next time.
+              Save this custom item to your catalog so it appears in future
+              suggestions.
             </label>
           </div>
         )}
@@ -525,12 +581,16 @@ function AddTemplateItemComposer({
               setError(null);
 
               startTransition(async () => {
+                const measurement = resolveMeasurementInput(
+                  quantity,
+                  unit,
+                  selectedSuggestion?.defaultUnit,
+                );
                 const result = await addTemplateItem({
                   templateId,
                   itemName: query,
-                  quantity: Number(quantity),
-                  unit:
-                    unit.trim() || selectedSuggestion?.defaultUnit || unit.trim(),
+                  quantity: measurement.quantity,
+                  unit: measurement.unit,
                   catalogItemId: selectedSuggestion?.id,
                   categoryId:
                     selectedSuggestion?.categoryId ??
@@ -553,7 +613,7 @@ function AddTemplateItemComposer({
                 setQuery("");
                 setSelectedSuggestion(null);
                 setSuggestions([]);
-                setQuantity("1");
+                setQuantity(supportsOptionalMeasurements ? "" : "1");
                 setUnit("");
                 setNewCategoryName("");
                 setSaveToCatalog(false);
@@ -582,6 +642,7 @@ export function TemplateEditor({
   categories,
   canMutate,
   issue,
+  supportsOptionalMeasurements,
 }: TemplateEditorProps) {
   const router = useRouter();
   const [name, setName] = useState(detail.template.name);
@@ -592,6 +653,15 @@ export function TemplateEditor({
   const groupedItems = groupItemsByCategory(detail.items);
   const categoryNames = categories.map((category) => category.name);
   const isDisabled = !canMutate || isPending;
+  const templateIntro = detail.template.isDefault
+    ? "Edit this list first. Most trips should start here."
+    : "Use this only when a trip needs a clearly different packing list.";
+  const emptyStateTitle = detail.template.isDefault
+    ? "Add the essentials you never want to forget."
+    : "Add the items that make this template different.";
+  const emptyStateBody = detail.template.isDefault
+    ? "Build one trusted list here, then create an extra template only when you need it."
+    : "Keep this focused so it stays meaningfully different from your default list.";
 
   return (
     <div className="space-y-6">
@@ -604,7 +674,9 @@ export function TemplateEditor({
       <Card className="border border-border/70 bg-card/95 shadow-sm">
         <CardHeader className="gap-4">
           <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="outline">Template editor</Badge>
+            <Badge variant="outline">
+              {detail.template.isDefault ? "Basic mode" : "Advanced template"}
+            </Badge>
             {detail.template.isDefault ? (
               <Badge variant="secondary">Default template</Badge>
             ) : null}
@@ -612,6 +684,15 @@ export function TemplateEditor({
               {detail.template.itemCount}{" "}
               {detail.template.itemCount === 1 ? "item" : "items"}
             </Badge>
+          </div>
+
+          <div className="space-y-2">
+            <CardTitle className="text-2xl">
+              {detail.template.isDefault ? "Main packing list" : "Extra template"}
+            </CardTitle>
+            <p className="max-w-3xl text-sm leading-6 text-muted-foreground sm:text-base">
+              {templateIntro}
+            </p>
           </div>
 
           <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto]">
@@ -746,16 +827,16 @@ export function TemplateEditor({
         templateId={detail.template.id}
         categories={categories}
         canMutate={canMutate}
+        supportsOptionalMeasurements={supportsOptionalMeasurements}
       />
 
       <div className="space-y-4">
         {groupedItems.length === 0 ? (
           <Card className="border border-dashed border-border/80 bg-card/70 shadow-sm">
             <CardContent className="py-10 text-center">
-              <p className="text-lg font-medium">This template is still empty.</p>
+              <p className="text-lg font-medium">{emptyStateTitle}</p>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                Add a saved suggestion or a brand-new custom item above to start
-                shaping this packing setup.
+                {emptyStateBody}
               </p>
             </CardContent>
           </Card>
@@ -781,6 +862,7 @@ export function TemplateEditor({
                     templateId={detail.template.id}
                     categoryNames={categoryNames}
                     canMutate={canMutate}
+                    supportsOptionalMeasurements={supportsOptionalMeasurements}
                   />
                 ))}
               </CardContent>

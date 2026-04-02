@@ -33,6 +33,13 @@ These contracts are stable enough for worker threads to build against. Keep nami
 - `getTemplateDetails(templateId)`
 - `getCatalogSuggestions(query)`
 
+### Seeded starter-data contract
+- `getCatalogSuggestions(query)` should expect a product-sized system catalog, currently roughly `1200+` seeded system items before any user-created rows.
+- The default starter template is curated, not exhaustive, and currently seeds roughly `60` rows.
+- Starter-template rows deliberately include both:
+  - plain essentials with `quantity: null` and `unit: null`
+  - measured rows with a positive `quantity` and non-empty `unit`
+
 ### Actions
 - `createTemplate(input)`
 - `renameTemplate(input)`
@@ -43,8 +50,11 @@ These contracts are stable enough for worker threads to build against. Keep nami
 - `removeTemplateItem(input)`
 
 ### Input shape conventions
-- `quantity: number`
-- `unit: string`
+- `quantity?: number | null`
+- `unit?: string | null`
+- Quantity and unit are a pair:
+  - send both fields with values for measured rows
+  - send both as `null` or omit both for single-instance rows
 - `categoryId?: string`
 - `categoryName?: string`
 - `saveToCatalog?: boolean`
@@ -82,11 +92,18 @@ These contracts are stable enough for worker threads to build against. Keep nami
   - optimistic or transitional interactions
 
 ## Validation Rules
-- Quantity must be positive.
-- Unit must be non-empty short text.
+- If present, quantity must be positive.
+- If present, unit must be non-empty short text.
+- Quantity and unit must be omitted together for single-instance items.
 - Template name and trip name must be non-empty.
 - Stop list must always resolve to at least `Home -> Destination -> Home`.
 - Users must only mutate rows owned by their profile or system-cloned descendants.
+
+## Snapshot Output Rules
+- Template-item and trip-item loaders may now return `quantity: null` and `unit: null`.
+- Renderers must suppress measurement text completely when both values are null.
+- Starter-template copies must preserve null/null rows instead of coercing them into fake `1 item` style measurements.
+- Downstream UI threads should use [`lib/domain/measurements.ts`](/Users/ivan.pomortsev/Projects/test-project/lib/domain/measurements.ts) or equivalent pair-aware checks instead of string concatenation.
 
 ## Revalidation Guidance
 - Mutations should revalidate the smallest affected route/path.

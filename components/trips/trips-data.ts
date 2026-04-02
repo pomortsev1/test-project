@@ -76,8 +76,8 @@ type TemplateItemRow = {
   item_name: string;
   item_normalized_name: string;
   category_name: string;
-  quantity: number | string;
-  unit: string;
+  quantity: number | null;
+  unit: string | null;
   sort_order: number;
 };
 
@@ -85,8 +85,8 @@ type TripItemRow = {
   id: string;
   item_name: string;
   category_name: string;
-  quantity: number | string;
-  unit: string;
+  quantity: number | null;
+  unit: string | null;
   sort_order: number;
 };
 
@@ -125,19 +125,15 @@ function cleanStopName(value: string) {
   return cleanText(value);
 }
 
-function toNumber(value: number | string | null | undefined) {
-  if (typeof value === "number") {
-    return value;
+function normalizeMeasurementPair(value: {
+  quantity: number | null;
+  unit: string | null;
+}) {
+  if (value.quantity === null || value.unit === null) {
+    return { quantity: null, unit: null };
   }
 
-  if (typeof value === "string") {
-    const parsed = Number(value);
-    if (!Number.isNaN(parsed)) {
-      return parsed;
-    }
-  }
-
-  return 0;
+  return value;
 }
 
 function requireRow<T>(value: T | null, context: string): T {
@@ -488,8 +484,10 @@ function buildChecklistSelection(
     itemGroup.items.push({
       tripItemId: item.id,
       itemName: item.item_name,
-      quantity: toNumber(item.quantity),
-      unit: item.unit,
+      ...normalizeMeasurementPair({
+        quantity: item.quantity,
+        unit: item.unit,
+      }),
       categoryName: item.category_name,
       isPacked: checkByTripItemId.get(item.id)?.is_packed ?? false,
     });
@@ -872,26 +870,34 @@ export async function createTripData(input: CreateTripInput) {
       (left, right) => left.position - right.position
     );
 
-    const { data: insertedTripItems, error: tripItemsError } = await client
-      .from("trip_items")
-      .insert(
-        (templateItems ?? []).map((item) => ({
-          trip_id: createdTripId,
-          catalog_item_id: item.catalog_item_id,
-          template_item_id: item.id,
-          item_name: item.item_name,
-          item_normalized_name: item.item_normalized_name,
-          category_name: item.category_name,
-          quantity: toNumber(item.quantity),
-          unit: item.unit,
-          sort_order: item.sort_order,
-        }))
-      )
-      .select("id")
-      .returns<Array<{ id: string }>>();
+    const tripItemInsertPayload = (templateItems ?? []).map((item) => ({
+      trip_id: createdTripId,
+      catalog_item_id: item.catalog_item_id,
+      template_item_id: item.id,
+      item_name: item.item_name,
+      item_normalized_name: item.item_normalized_name,
+      category_name: item.category_name,
+      ...normalizeMeasurementPair({
+        quantity: item.quantity,
+        unit: item.unit,
+      }),
+      sort_order: item.sort_order,
+    }));
 
-    if (tripItemsError) {
-      throw tripItemsError;
+    let insertedTripItems: Array<{ id: string }> = [];
+
+    if (tripItemInsertPayload.length > 0) {
+      const { data, error: tripItemsError } = await client
+        .from("trip_items")
+        .insert(tripItemInsertPayload)
+        .select("id")
+        .returns<Array<{ id: string }>>();
+
+      if (tripItemsError) {
+        throw tripItemsError;
+      }
+
+      insertedTripItems = data ?? [];
     }
 
     const legPayload = orderedStops.slice(0, -1).map((stop, index) => ({

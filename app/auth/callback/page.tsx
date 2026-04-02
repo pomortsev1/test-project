@@ -18,6 +18,13 @@ function readCookie(name: string) {
   return match ? decodeURIComponent(match.slice(prefix.length)) : null;
 }
 
+function getCookieNames() {
+  return document.cookie
+    .split(";")
+    .map((cookie) => cookie.trim().split("=")[0])
+    .filter(Boolean);
+}
+
 function AuthCallbackContent() {
   const searchParams = useSearchParams();
 
@@ -87,7 +94,17 @@ function AuthCallbackContent() {
 
         const finalizeUrl = new URL("/auth/finalize", window.location.origin);
         finalizeUrl.searchParams.set("next", nextPath);
-        window.location.replace(finalizeUrl.toString());
+        window.setTimeout(() => {
+          if (cancelled) {
+            return;
+          }
+
+          console.info("[google-auth] callback redirecting to finalize", {
+            cookieNames: getCookieNames(),
+            nextPath,
+          });
+          window.location.replace(finalizeUrl.toString());
+        }, 200);
       });
 
       const {
@@ -115,12 +132,24 @@ function AuthCallbackContent() {
 
       if (session) {
         console.info("[google-auth] browser session ready", {
+          cookieNames: getCookieNames(),
           nextPath,
         });
-        subscription.unsubscribe();
         const finalizeUrl = new URL("/auth/finalize", window.location.origin);
         finalizeUrl.searchParams.set("next", nextPath);
-        window.location.replace(finalizeUrl.toString());
+        window.setTimeout(() => {
+          if (cancelled) {
+            subscription.unsubscribe();
+            return;
+          }
+
+          console.info("[google-auth] callback redirecting to finalize", {
+            cookieNames: getCookieNames(),
+            nextPath,
+          });
+          subscription.unsubscribe();
+          window.location.replace(finalizeUrl.toString());
+        }, 200);
         return;
       }
 

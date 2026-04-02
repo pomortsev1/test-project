@@ -72,14 +72,17 @@ Rules:
 - `item_name text not null`
 - `item_normalized_name text not null`
 - `category_name text not null`
-- `quantity numeric not null`
-- `unit text not null`
+- `quantity numeric null`
+- `unit text null`
 - `sort_order integer not null default 0`
 - `created_at timestamptz default now()`
 - `updated_at timestamptz default now()`
 
 Rules:
 - Snapshot the display names needed to render the item even if the catalog changes later
+- Measurement is optional, but it is a pair:
+  - `quantity` and `unit` are both `null` for single-instance items such as passport
+  - `quantity > 0` and `unit` is non-empty when measurement is present
 
 ### `trips`
 - `id uuid primary key`
@@ -115,13 +118,14 @@ Rules:
 - `item_name text not null`
 - `item_normalized_name text not null`
 - `category_name text not null`
-- `quantity numeric not null`
-- `unit text not null`
+- `quantity numeric null`
+- `unit text null`
 - `sort_order integer not null default 0`
 - `created_at timestamptz default now()`
 
 Rules:
 - Trip snapshot of item list
+- Same measurement-pair invariant as `packing_template_items`
 
 ### `trip_legs`
 - `id uuid primary key`
@@ -158,16 +162,22 @@ Rules:
   - Toiletries
   - Health
   - Misc
-- System starter catalog items:
-  - Passport, Boarding pass, Wallet
-  - Mobile phone, Phone charger, Power bank, Headphones
-  - T-shirts, Socks, Underwear, Trousers
-  - Toothbrush, Toothpaste, Deodorant
-  - Medication
-  - Keys, Water bottle
+- System catalog seeding is intentionally product-sized:
+  - roughly `1200+` practical system rows, not a demo list
+  - breadth across documents, work tech, climate clothing, toiletries, health, and travel accessories
+  - deterministic system IDs so repeated `npx supabase db reset` runs keep stable references for overlapping starter items
+- System starter catalog items include a richer baseline such as:
+  - Passport, Boarding pass, Wallet, ID card, Travel insurance card, credit card, emergency contact sheet
+  - Mobile phone, Phone charger, Laptop, Laptop charger, Power bank, Headphones, Travel adapter, USB-C cable
+  - T-shirts, Socks, Underwear, Trousers, Shorts, Hoodie, Lightweight jacket, Pajamas, Walking shoes
+  - Toothbrush, Toothpaste, Deodorant, Sunscreen, Lip balm, Hand sanitizer, travel-size shampoo
+  - Medication, Painkillers, Plasters, First-aid kit, Allergy tablets, Rehydration salts
+  - Keys, Water bottle, Sunglasses, Tote bag, Laundry bag, Packing cubes, Travel umbrella, Daypack
 - System starter template:
   - grouped across the seeded categories
-  - enough content to feel useful on first visit
+  - stays curated at roughly `60` rows rather than mirroring the full catalog
+  - intentionally mixes measured rows like `6 pairs socks` with plain rows like `Passport`
+  - is biased toward universal travel essentials so first-run editing stays manageable
 
 ## Invariants
 - Profiles only see their own user-scoped records plus system-scoped records.
@@ -175,3 +185,4 @@ Rules:
 - Template edits do not mutate existing trips.
 - Leg completion advances the trip; packing state never bleeds into the next leg.
 - `Go home now` should not destroy history of completed legs.
+- Snapshot items never store half-filled measurements.

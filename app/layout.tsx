@@ -1,5 +1,19 @@
 import type { Metadata } from "next";
+import { Fraunces, Plus_Jakarta_Sans } from "next/font/google";
+
 import "./globals.css";
+
+const sans = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-sans-ui",
+});
+
+const display = Fraunces({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-display",
+});
 
 export const metadata: Metadata = {
   title: {
@@ -7,7 +21,7 @@ export const metadata: Metadata = {
     template: "%s | Packing App",
   },
   description:
-    "Packing dashboard with Google sign-in and browser-based anonymous mode for templates, trips, and active-leg checklists.",
+    "Open the default packing list, turn it into a trip, and pack each leg with a focused checklist.",
 };
 
 export default function RootLayout({
@@ -16,7 +30,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="h-full antialiased">
+    <html
+      lang="en"
+      className={`${sans.variable} ${display.variable} h-full antialiased`}
+    >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );

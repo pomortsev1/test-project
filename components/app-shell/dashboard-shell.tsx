@@ -1,12 +1,12 @@
-import { Database, KeyRound, LayoutDashboard } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, LayoutDashboard } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { ActiveTripPanel } from "@/components/trips/active-trip-panel";
 import { TripsOverview } from "@/components/trips/trips-overview";
@@ -14,109 +14,156 @@ import { TemplatesOverview } from "@/components/templates/templates-overview";
 import type { DashboardData } from "@/lib/domain/types";
 
 export function DashboardShell({ data }: { data: DashboardData }) {
+  const defaultTemplate =
+    data.templates.find((template) => template.isDefault) ?? data.templates[0] ?? null;
+  const activeLeg = data.activeTrip?.legs.find((leg) => leg.status === "active") ?? null;
+  const packedCount =
+    activeLeg?.checklistItems.filter((item) => item.isPacked).length ?? 0;
+  const totalCount = activeLeg?.checklistItems.length ?? 0;
+  const draftTripsCount = data.trips.filter((trip) => trip.status === "draft").length;
+  const primaryHref = data.activeTrip
+    ? `/trips/${data.activeTrip.id}`
+    : defaultTemplate
+      ? `/templates/${defaultTemplate.id}`
+      : "/templates";
+  const primaryLabel = data.activeTrip ? "Open active trip" : "Open default template";
+  const secondaryHref =
+    data.activeTrip && defaultTemplate ? `/templates/${defaultTemplate.id}` : "/trips";
+  const secondaryLabel =
+    data.activeTrip && defaultTemplate ? "Open default template" : "Open trips";
+  const heroTitle = data.activeTrip
+    ? "Pack this leg."
+    : defaultTemplate
+      ? "Open your default template."
+      : "Create your first packing list.";
+  const heroDescription = data.activeTrip
+    ? `${data.activeTrip.name}: ${activeLeg?.fromStopName ?? "Current stop"} -> ${
+        activeLeg?.toStopName ?? "next stop"
+      }. ${packedCount} of ${totalCount} items packed for this move.`
+    : defaultTemplate
+      ? `${defaultTemplate.name} already has ${defaultTemplate.itemCount} items ready to tune before you plan the trip.`
+      : "Create one template so every trip starts from a real packing list.";
+  const workspaceLabel = data.profile.authMode === "google" ? "Google workspace" : "Guest workspace";
+  const hasTrips = data.trips.length > 0;
+
   return (
     <div className="space-y-6">
-      <section className="grid gap-4 lg:grid-cols-[minmax(0,1.3fr)_340px]">
-        <Card className="border border-border/70 bg-[linear-gradient(135deg,rgba(15,23,42,0.96),rgba(30,41,59,0.92),rgba(120,53,15,0.88))] text-slate-50 shadow-[0_24px_70px_rgba(15,23,42,0.28)]">
-          <CardHeader className="gap-4">
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge
-                variant="outline"
-                className="gap-1.5 border-white/20 bg-white/10 text-slate-50"
-              >
-                <LayoutDashboard className="size-3.5" />
-                Packing dashboard
-              </Badge>
-              <Badge variant="secondary" className="bg-white/15 text-slate-50">
-                {data.profile.authMode === "google"
-                  ? "Google workspace"
-                  : "Anonymous workspace"}
-              </Badge>
-            </div>
-            <div className="space-y-3">
-              <h1 className="max-w-3xl text-4xl font-semibold tracking-tight text-balance sm:text-5xl">
-                Plan templates, track live trip legs, and keep the whole route readable at a glance.
-              </h1>
-              <p className="max-w-2xl text-base leading-7 text-slate-200 sm:text-lg">
-                {data.profile.displayName} is ready with reusable packing templates,
-                a live trip checklist, and trip summaries shaped around the shared packing contracts.
-              </p>
-            </div>
-          </CardHeader>
-        </Card>
+      <Card className="packing-panel-strong border-0">
+        <CardHeader className="gap-5">
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge
+              variant="outline"
+              className="gap-1.5 border-white/20 bg-white/10 text-slate-50"
+            >
+              <LayoutDashboard className="size-3.5" />
+              Next action
+            </Badge>
+            <Badge variant="secondary" className="bg-white/15 text-slate-50">
+              {workspaceLabel}
+            </Badge>
+          </div>
 
-        <Card className="border border-border/70 bg-card/92 shadow-sm">
-          <CardHeader>
-            <CardTitle>Session status</CardTitle>
-            <CardDescription>
-              {data.profile.authMode === "google"
-                ? "Google-authenticated access is active, and anonymous mode stays available when you switch back."
-                : "Anonymous cookie bootstrap is active, and Google sign-in remains available as an upgrade path."}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="rounded-2xl border border-border/70 bg-background/80 p-4">
-              <div className="flex items-center gap-3">
-                <KeyRound className="size-5 text-amber-700" />
-                <div>
-                  <p className="font-medium">Profile</p>
-                  {data.profile.authMode === "google" ? (
-                    <div className="space-y-0.5 text-sm text-muted-foreground">
-                      <p>{data.profile.displayName}</p>
-                      <p>{data.profile.email ?? data.profile.id}</p>
-                    </div>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">{data.profile.id}</p>
-                  )}
-                </div>
+          <div className="space-y-3">
+            <h1 className="max-w-3xl font-heading text-5xl leading-none text-balance sm:text-6xl">
+              {heroTitle}
+            </h1>
+            <p className="max-w-2xl text-base leading-7 text-slate-200 sm:text-lg">
+              {heroDescription}
+            </p>
+          </div>
+        </CardHeader>
+
+        <CardContent className="space-y-5">
+          <div className="flex flex-wrap gap-3">
+            <Button
+              nativeButton={false}
+              className="h-11 rounded-2xl bg-white text-slate-950 shadow-sm hover:bg-slate-100"
+              render={<Link href={primaryHref} />}
+            >
+              {primaryLabel}
+              <ArrowRight className="size-4" />
+            </Button>
+
+            <Button
+              nativeButton={false}
+              variant="outline"
+              className="h-11 rounded-2xl border-white/20 bg-white/10 text-white hover:bg-white/20 hover:text-white"
+              render={<Link href={secondaryHref} />}
+            >
+              {secondaryLabel}
+            </Button>
+          </div>
+
+          <div className="flex flex-wrap gap-2 text-sm">
+            {data.activeTrip ? (
+              <div className="rounded-full border border-white/15 bg-white/10 px-3 py-2 text-slate-100">
+                {activeLeg?.fromStopName ?? "Current stop"}
+                {" -> "}
+                {activeLeg?.toStopName ?? "next stop"}
               </div>
-            </div>
-            <div className="rounded-2xl border border-border/70 bg-background/80 p-4">
-              <div className="flex items-center gap-3">
-                <Database className="size-5 text-sky-700" />
-                <div>
-                  <p className="font-medium">Supabase</p>
-                  <p className="text-sm text-muted-foreground">
-                    {data.isSupabaseConfigured
-                      ? "Environment variables detected."
-                      : "Running safely without database environment variables."}
-                  </p>
-                </div>
+            ) : null}
+            {defaultTemplate ? (
+              <div className="rounded-full border border-white/15 bg-white/10 px-3 py-2 text-slate-100">
+                {defaultTemplate.name}
               </div>
+            ) : null}
+            {defaultTemplate ? (
+              <div className="rounded-full border border-white/15 bg-white/10 px-3 py-2 text-slate-100">
+                {defaultTemplate.itemCount}{" "}
+                {defaultTemplate.itemCount === 1 ? "item" : "items"}
+              </div>
+            ) : null}
+            <div className="rounded-full border border-white/15 bg-white/10 px-3 py-2 text-slate-100">
+              {draftTripsCount} draft {draftTripsCount === 1 ? "trip" : "trips"}
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {data.activeTrip ? (
+        <section className="space-y-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="text-2xl font-semibold tracking-tight">Active trip</h2>
+            <p className="text-sm text-muted-foreground">
+              Pack the live checklist first. The rest of the route can wait.
+            </p>
+          </div>
+          <ActiveTripPanel trip={data.activeTrip} />
+        </section>
+      ) : null}
+
+      <section className="grid gap-6 xl:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
+        <div className="space-y-4">
+          <div className="space-y-1">
+            <h2 className="text-2xl font-semibold tracking-tight">Templates</h2>
+            <p className="text-sm text-muted-foreground">
+              Keep the default list close. Extra templates stay secondary.
+            </p>
+          </div>
+          <TemplatesOverview templates={data.templates} />
+        </div>
+
+        <div className="space-y-4">
+          <div className="space-y-1">
+            <h2 className="text-2xl font-semibold tracking-tight">Trips</h2>
+            <p className="text-sm text-muted-foreground">
+              {hasTrips
+                ? "Draft, active, and finished routes stay in one place."
+                : "Create a trip when the list is ready."}
+            </p>
+          </div>
+          <TripsOverview trips={data.trips} />
+        </div>
+      </section>
+
+      {!data.isSupabaseConfigured ? (
+        <Card className="packing-panel border-0">
+          <CardContent className="px-4 py-4 text-sm leading-6 text-slate-600">
+            Google sign-in is not configured here yet. The guest workspace still
+            supports the full packing flow.
           </CardContent>
         </Card>
-      </section>
-
-      <section className="space-y-4">
-        <div className="space-y-1">
-          <h2 className="text-2xl font-semibold tracking-tight">Active leg</h2>
-          <p className="text-sm text-muted-foreground">
-            The current packing view is scoped to the active leg so checklist state does not bleed into the next move.
-          </p>
-        </div>
-        <ActiveTripPanel trip={data.activeTrip} />
-      </section>
-
-      <section className="space-y-4">
-        <div className="space-y-1">
-          <h2 className="text-2xl font-semibold tracking-tight">Trips</h2>
-          <p className="text-sm text-muted-foreground">
-            Active, draft, and completed trips now share the same route and status language.
-          </p>
-        </div>
-        <TripsOverview trips={data.trips} />
-      </section>
-
-      <section className="space-y-4">
-        <div className="space-y-1">
-          <h2 className="text-2xl font-semibold tracking-tight">Templates</h2>
-          <p className="text-sm text-muted-foreground">
-            Templates stay visible on the dashboard so the packing source of truth sits next to trip planning.
-          </p>
-        </div>
-        <TemplatesOverview templates={data.templates} />
-      </section>
+      ) : null}
     </div>
   );
 }

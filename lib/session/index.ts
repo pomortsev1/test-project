@@ -2,7 +2,10 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 
-import { PACKING_APP_USER_ID_COOKIE } from "@/lib/domain/constants";
+import {
+  PACKING_APP_USER_ID_COOKIE,
+  STARTER_TEMPLATE_NAME,
+} from "@/lib/domain/constants";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 const COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 365;
@@ -212,8 +215,13 @@ async function getAuthenticatedSessionIdentity() {
   const supabase = await createSupabaseServerClient();
 
   if (!supabase) {
+    console.info("[google-auth] server identity lookup: no supabase client");
     return null;
   }
+
+  const cookieStore = await cookies();
+  const cookieNames = cookieStore.getAll().map((cookie) => cookie.name);
+  const authCookieNames = cookieNames.filter((name) => name.startsWith("sb-"));
 
   const {
     data: { user },
@@ -221,8 +229,19 @@ async function getAuthenticatedSessionIdentity() {
   } = await supabase.auth.getUser();
 
   if (error || !user) {
+    console.info("[google-auth] server identity lookup failed", {
+      authCookieNames,
+      error: error?.message ?? null,
+      hasUser: Boolean(user),
+    });
     return null;
   }
+
+  console.info("[google-auth] server identity lookup succeeded", {
+    authCookieNames,
+    email: user.email ?? null,
+    userId: user.id,
+  });
 
   return createSessionIdentityFromAuthUser(user);
 }
@@ -252,6 +271,8 @@ export async function getOrThrowCurrentUserId(nextPath = "/dashboard") {
     redirect(getAuthChoicePath(nextPath));
   }
 
+  await ensureProfileForUserId(identity.userId, identity);
+
   return identity.userId;
 }
 
@@ -261,6 +282,8 @@ export async function requireCurrentUserId(nextPath: string) {
   if (!identity) {
     redirect(getAuthChoicePath(nextPath));
   }
+
+  await ensureProfileForUserId(identity.userId, identity);
 
   return identity.userId;
 }
@@ -363,6 +386,29 @@ export async function ensureProfileForUserId(
         ],
       };
     }
+  }
+
+  const starterTemplateResult = await supabase.rpc(
+    "ensure_profile_starter_template",
+    {
+      p_profile_id: userId,
+      p_template_name: STARTER_TEMPLATE_NAME,
+    },
+  );
+
+  if (starterTemplateResult.error) {
+    return {
+      authMode: resolvedIdentity.authMode,
+      email: resolvedIdentity.email,
+      id: userId,
+      displayName: resolvedIdentity.label,
+      source: "degraded",
+      notes: [
+        `The workspace profile exists, but the starter template could not be prepared yet: ${getErrorMessage(
+          starterTemplateResult.error,
+        )}`,
+      ],
+    };
   }
 
   const resolvedDisplayName =

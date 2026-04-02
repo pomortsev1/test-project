@@ -31,6 +31,7 @@ import {
 import {
   formatChecklistProgress,
   formatLegStatus,
+  formatTripItemMeasurement,
   formatTripDate,
   formatTripMode,
   formatTripStatus,
@@ -53,25 +54,31 @@ export function TripDetail({ trip }: TripDetailProps) {
     trip.activeLeg !== null &&
     trip.checklistLegId === trip.activeLeg.id &&
     trip.checklistLegStatus === "active";
+  const checklistSummary = trip.checklistRouteLabel
+    ? `${trip.checklistRouteLabel} • ${formatChecklistProgress(
+        trip.checklistPackedCount,
+        trip.checklistTotalCount,
+      )}`
+    : "No checklist yet.";
 
   return (
     <div className="space-y-6">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <Link
-            href="/trips"
-            className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground transition hover:text-foreground"
-          >
-            <ArrowLeft className="size-4" />
-            Back to trips
-          </Link>
-          <div className="flex flex-wrap gap-2">
-            <Badge variant={getTripStatusBadgeVariant(trip.status)}>
-              {formatTripStatus(trip.status)}
-            </Badge>
-            <Badge variant="outline">{formatTripMode(trip.mode)}</Badge>
-            <Badge variant="outline">{formatTripDate(trip.createdAt)}</Badge>
-          </div>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Link
+          href="/trips"
+          className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground transition hover:text-foreground"
+        >
+          <ArrowLeft className="size-4" />
+          Back to trips
+        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Badge variant={getTripStatusBadgeVariant(trip.status)}>
+            {formatTripStatus(trip.status)}
+          </Badge>
+          <Badge variant="outline">{formatTripMode(trip.mode)}</Badge>
+          <Badge variant="outline">{formatTripDate(trip.createdAt)}</Badge>
         </div>
+      </div>
 
         <Card className="border border-border/70 bg-card/95 shadow-sm">
           <CardHeader className="gap-4">
@@ -164,10 +171,10 @@ export function TripDetail({ trip }: TripDetailProps) {
             <div className="grid gap-3 md:grid-cols-3">
               <div className="rounded-2xl border border-border/70 bg-background/80 p-4">
                 <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                  Template snapshot
+                  Template
                 </p>
                 <p className="mt-2 font-medium">
-                  {trip.templateName ?? "Detached from template"}
+                  {trip.templateName ?? "Snapshot only"}
                 </p>
               </div>
               <div className="rounded-2xl border border-border/70 bg-background/80 p-4">
@@ -177,12 +184,12 @@ export function TripDetail({ trip }: TripDetailProps) {
                 <p className="mt-2 font-medium">
                   {trip.activeLeg
                     ? `${trip.activeLeg.fromStopName} -> ${trip.activeLeg.toStopName}`
-                    : "No active leg"}
+                    : "Not started yet"}
                 </p>
               </div>
               <div className="rounded-2xl border border-border/70 bg-background/80 p-4">
                 <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                  Packing progress
+                  Checklist
                 </p>
                 <p className="mt-2 font-medium">
                   {formatChecklistProgress(
@@ -209,8 +216,7 @@ export function TripDetail({ trip }: TripDetailProps) {
                 Journey legs
               </CardTitle>
               <CardDescription>
-                Completed history stays visible, and every leg keeps its own
-                separate packing state.
+                Each leg keeps its own checklist.
               </CardDescription>
             </CardHeader>
 
@@ -270,14 +276,7 @@ export function TripDetail({ trip }: TripDetailProps) {
                 <Luggage className="size-5" />
                 Checklist
               </CardTitle>
-              <CardDescription>
-                {trip.checklistRouteLabel
-                  ? `${trip.checklistRouteLabel} • ${formatChecklistProgress(
-                      trip.checklistPackedCount,
-                      trip.checklistTotalCount,
-                    )}`
-                  : "No checklist available for this trip yet."}
-              </CardDescription>
+              <CardDescription>{checklistSummary}</CardDescription>
             </CardHeader>
 
             <CardContent className="space-y-5">
@@ -299,6 +298,7 @@ export function TripDetail({ trip }: TripDetailProps) {
                       {group.items.map((item) => {
                         const isDisabled =
                           !checklistIsInteractive || isPending || pendingItemId === item.tripItemId;
+                        const measurementLabel = formatTripItemMeasurement(item);
 
                         return (
                           <label
@@ -347,9 +347,11 @@ export function TripDetail({ trip }: TripDetailProps) {
                               <div className="flex flex-wrap items-center justify-between gap-3">
                                 <div>
                                   <p className="font-medium">{item.itemName}</p>
-                                  <p className="text-sm text-muted-foreground">
-                                    {item.quantity} {item.unit}
-                                  </p>
+                                  {measurementLabel ? (
+                                    <p className="text-sm text-muted-foreground">
+                                      {measurementLabel}
+                                    </p>
+                                  ) : null}
                                 </div>
 
                                 {item.isPacked ? (
@@ -392,8 +394,7 @@ export function TripDetail({ trip }: TripDetailProps) {
                 <div className="rounded-2xl border border-amber-300/60 bg-amber-50/70 p-4 text-sm text-amber-950">
                   <p className="font-medium">Need to cut the route short?</p>
                   <p className="mt-1">
-                    Go-home-now skips the remaining planned stops and resets this
-                    leg&apos;s checklist for a direct trip back home.
+                    Skip the remaining stops and switch to a direct leg home.
                   </p>
                   <Button
                     type="button"

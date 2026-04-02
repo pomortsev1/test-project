@@ -30,16 +30,14 @@ export default async function TripsPage() {
           <CardHeader className="gap-4">
             <Badge variant="outline" className="w-fit gap-1.5">
               <Compass className="size-3.5" />
-              Trips + active journey
+              Trips
             </Badge>
             <div className="space-y-3">
               <CardTitle className="text-3xl font-semibold tracking-tight text-balance">
-                Plan the route, start the move, and repack every leg with a fresh checklist.
+                Build the route, then pack one leg at a time.
               </CardTitle>
               <CardDescription className="max-w-3xl text-base leading-7">
-                Trips snapshot template items when they are created, keep packing
-                progress isolated to each leg, and make the next route obvious
-                when you arrive or cut the plan short to head home.
+                Start with the default template or pick another saved list.
               </CardDescription>
             </div>
           </CardHeader>
@@ -49,11 +47,10 @@ export default async function TripsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Route className="size-5" />
-              Dashboard pulse
+              Quick view
             </CardTitle>
             <CardDescription>
-              Active trips stay on top, draft journeys wait underneath, and
-              finished routes stay readable.
+              Active trips stay on top, followed by drafts and finished routes.
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-3">
@@ -86,10 +83,9 @@ export default async function TripsPage() {
       ) : (
         <Card className="border border-dashed border-border/80 bg-card/90">
           <CardHeader>
-            <CardTitle>No templates to snapshot yet</CardTitle>
+            <CardTitle>No templates yet</CardTitle>
             <CardDescription>
-              The planner is ready, but it needs template data before a trip can
-              be created.
+              Create or recover a template before planning a trip.
             </CardDescription>
           </CardHeader>
         </Card>
@@ -99,7 +95,7 @@ export default async function TripsPage() {
         <div className="space-y-1">
           <h2 className="text-2xl font-semibold tracking-tight">Saved trips</h2>
           <p className="text-sm text-muted-foreground">
-            The current route, status, and next action stay visible at a glance.
+            Open any trip to start it or keep packing.
           </p>
         </div>
 

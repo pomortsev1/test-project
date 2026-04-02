@@ -62,8 +62,8 @@ export type TripLeg = {
 export type TripChecklistItem = {
   tripItemId: string;
   itemName: string;
-  quantity: number;
-  unit: string;
+  quantity: number | null;
+  unit: string | null;
   categoryName: string;
   isPacked: boolean;
 };

@@ -134,10 +134,10 @@ export interface Database {
           id: string;
           item_name: string;
           item_normalized_name: string;
-          quantity: number;
+          quantity: number | null;
           sort_order: number;
           template_id: string;
-          unit: string;
+          unit: string | null;
           updated_at: string;
         };
         Insert: {
@@ -147,10 +147,10 @@ export interface Database {
           id?: string;
           item_name: string;
           item_normalized_name: string;
-          quantity: number;
+          quantity?: number | null;
           sort_order?: number;
           template_id: string;
-          unit: string;
+          unit?: string | null;
           updated_at?: string;
         };
         Update: {
@@ -160,10 +160,10 @@ export interface Database {
           id?: string;
           item_name?: string;
           item_normalized_name?: string;
-          quantity?: number;
+          quantity?: number | null;
           sort_order?: number;
           template_id?: string;
-          unit?: string;
+          unit?: string | null;
           updated_at?: string;
         };
         Relationships: [];
@@ -239,11 +239,11 @@ export interface Database {
           id: string;
           item_name: string;
           item_normalized_name: string;
-          quantity: number;
+          quantity: number | null;
           sort_order: number;
           template_item_id: string | null;
           trip_id: string;
-          unit: string;
+          unit: string | null;
         };
         Insert: {
           catalog_item_id?: string | null;
@@ -252,11 +252,11 @@ export interface Database {
           id?: string;
           item_name: string;
           item_normalized_name: string;
-          quantity: number;
+          quantity?: number | null;
           sort_order?: number;
           template_item_id?: string | null;
           trip_id: string;
-          unit: string;
+          unit?: string | null;
         };
         Update: {
           catalog_item_id?: string | null;
@@ -265,11 +265,11 @@ export interface Database {
           id?: string;
           item_name?: string;
           item_normalized_name?: string;
-          quantity?: number;
+          quantity?: number | null;
           sort_order?: number;
           template_item_id?: string | null;
           trip_id?: string;
-          unit?: string;
+          unit?: string | null;
         };
         Relationships: [];
       };
@@ -359,9 +359,9 @@ export interface Database {
           catalog_item_id: string;
           category_name: string;
           item_name: string;
-          quantity: number;
+          quantity: number | null;
           sort_order: number;
-          unit: string;
+          unit: string | null;
         }[];
       };
       merge_packing_profiles: {

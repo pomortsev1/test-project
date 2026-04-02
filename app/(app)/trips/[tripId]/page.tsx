@@ -27,8 +27,7 @@ export default async function TripDetailPage({ params }: TripDetailPageProps) {
             <CardHeader>
               <CardTitle>Trip not found</CardTitle>
               <CardDescription>
-                This trip either doesn&apos;t exist for the current browser
-                profile or the session hasn&apos;t been initialized yet.
+                This trip is not available for the current workspace.
               </CardDescription>
             </CardHeader>
             <CardContent>

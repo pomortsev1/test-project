@@ -18,19 +18,17 @@ export default async function TemplatesLayout({
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(255,250,240,0.96),rgba(248,250,252,0.94),rgba(226,232,240,0.82))]">
       <main className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-8 px-6 py-8 sm:px-8 lg:px-10 lg:py-10">
-        <section className="space-y-3">
+        <section className="space-y-2">
           <p className="text-xs font-medium uppercase tracking-[0.28em] text-muted-foreground">
-            Packing app
+            Templates
           </p>
-          <div className="space-y-3">
-            <h1 className="max-w-4xl text-4xl font-semibold tracking-tight text-balance sm:text-5xl">
-              Build reusable packing templates with catalog-backed item ideas.
-            </h1>
-            <p className="max-w-3xl text-base leading-7 text-muted-foreground sm:text-lg">
-              Keep a few sharp starting points ready for weekend trips, long
-              flights, work travel, or anything else that repeats often.
-            </p>
-          </div>
+          <h1 className="max-w-4xl text-4xl font-semibold tracking-tight text-balance sm:text-5xl">
+            Open your default list and edit it fast.
+          </h1>
+          <p className="max-w-3xl text-base leading-7 text-muted-foreground sm:text-lg">
+            Keep one trusted main template. Add another only when the trip
+            really needs its own version.
+          </p>
         </section>
 
         {templatesState.issue ? (

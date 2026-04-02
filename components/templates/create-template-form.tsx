@@ -9,10 +9,18 @@ import { Button } from "@/components/ui/button";
 
 type CreateTemplateFormProps = {
   disabled?: boolean;
+  fieldLabel?: string;
+  onCreated?: () => void;
+  placeholder?: string;
+  submitLabel?: string;
 };
 
 export function CreateTemplateForm({
   disabled = false,
+  fieldLabel = "New template",
+  onCreated,
+  placeholder = "Weekend city break",
+  submitLabel = "Create template",
 }: CreateTemplateFormProps) {
   const router = useRouter();
   const [name, setName] = useState("");
@@ -37,6 +45,7 @@ export function CreateTemplateForm({
           }
 
           setName("");
+          onCreated?.();
           router.push(`/templates/${result.data.templateId}`);
           router.refresh();
         });
@@ -47,14 +56,14 @@ export function CreateTemplateForm({
           htmlFor="template-create-name"
           className="text-xs font-medium uppercase tracking-[0.22em] text-muted-foreground"
         >
-          New template
+          {fieldLabel}
         </label>
         <input
           id="template-create-name"
           value={name}
           onChange={(event) => setName(event.target.value)}
           disabled={isDisabled}
-          placeholder="Weekend city break"
+          placeholder={placeholder}
           className="h-11 w-full rounded-xl border border-border/80 bg-background/80 px-3 text-sm shadow-sm outline-none transition focus:border-foreground/30 focus:ring-4 focus:ring-foreground/5 disabled:cursor-not-allowed disabled:opacity-60"
         />
       </div>
@@ -69,7 +78,7 @@ export function CreateTemplateForm({
         ) : (
           <Plus className="size-4" />
         )}
-        Create template
+        {submitLabel}
       </Button>
 
       {error ? <p className="text-sm text-destructive">{error}</p> : null}

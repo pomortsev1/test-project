@@ -1,8 +1,6 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-import { updateSession } from "@/lib/supabase/proxy";
-
 export async function proxy(request: NextRequest) {
   if (
     process.env.NODE_ENV !== "production" &&
@@ -14,7 +12,23 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  return updateSession(request);
+  if (
+    process.env.NODE_ENV !== "production" &&
+    ["/auth/finalize", "/dashboard", "/"].includes(request.nextUrl.pathname)
+  ) {
+    console.info("[google-auth] proxy request", {
+      cookieNames: request.cookies.getAll().map((cookie) => cookie.name),
+      pathname: request.nextUrl.pathname,
+      url: request.url,
+    });
+  }
+
+  const response = NextResponse.next({
+    request,
+  });
+  response.headers.set("Cache-Control", "private, no-store");
+
+  return response;
 }
 
 export const config = {

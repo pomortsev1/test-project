@@ -32,6 +32,18 @@
 - Verify `Arrived`
 - Verify `Go home now`
 
+## Recovery QA
+- Verify `/templates` opens a real default template instead of a dead end.
+- Verify the default template can be edited even when items omit both quantity and unit.
+- Verify a new additional template can be created and edited.
+- Verify a trip can be created from the default template.
+- Verify a trip can be created from a non-default template.
+- Verify optional-measurement items snapshot into trips without insert failures.
+- Verify checklist rows hide measurement text cleanly when both measurement fields are absent.
+- Verify the system catalog is materially larger than the current 34-item baseline.
+  Check the seeded row count directly if needed, for example with `select count(*) from catalog_items where scope = 'system';`.
+- Verify landing and dashboard copy no longer bury the workflow under long reads and extra helper blocks.
+
 ## Manual Command Notes
 - The app may require a server restart after new environment variables, generated types, or major route/layout changes.
 - If migrations or seed files are added, apply them with `npx supabase db push`.

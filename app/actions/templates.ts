@@ -3,7 +3,11 @@
 import { revalidatePath } from "next/cache";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import { getCurrentUserId as getCurrentSessionUserId } from "@/lib/session";
+import type { QuantityInputValue, QuantityValue } from "@/lib/domain/types";
+import {
+  ensureProfileForUserId,
+  getCurrentUserId as getCurrentSessionUserId,
+} from "@/lib/session";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 const TEMPLATES_PATH = "/templates";
@@ -17,6 +21,14 @@ const SYSTEM_CATEGORY_ORDER = [
 ];
 
 type JsonRecord = Record<string, unknown>;
+type TemplateMeasurementValue = {
+  quantity: QuantityValue["quantity"];
+  unit: QuantityValue["unit"];
+};
+type TemplateMeasurementInput = {
+  quantity?: QuantityInputValue["quantity"];
+  unit?: QuantityInputValue["unit"];
+};
 
 export type Scope = "system" | "user";
 
@@ -57,10 +69,8 @@ export type TemplateItem = {
   itemName: string;
   itemNormalizedName: string;
   categoryName: string;
-  quantity: number;
-  unit: string;
   sortOrder: number;
-};
+} & TemplateMeasurementValue;
 
 export type TemplateDetails = {
   template: TemplateSummary;
@@ -77,6 +87,10 @@ export type TemplateDetailsLoaderResult = LoaderState & {
 
 export type CategoryOptionsLoaderResult = LoaderState & {
   categories: CategoryOption[];
+};
+
+export type TemplateEditorCapabilities = {
+  supportsOptionalMeasurements: boolean;
 };
 
 export type ActionResult<T> =
@@ -103,22 +117,18 @@ export type SetDefaultTemplateInput = {
 export type AddTemplateItemInput = {
   templateId: string;
   itemName: string;
-  quantity: number;
-  unit: string;
   catalogItemId?: string;
   categoryId?: string;
   categoryName?: string;
   saveToCatalog?: boolean;
-};
+} & TemplateMeasurementInput;
 
 export type UpdateTemplateItemInput = {
   templateId: string;
   templateItemId: string;
   itemName: string;
   categoryName: string;
-  quantity: number;
-  unit: string;
-};
+} & TemplateMeasurementInput;
 
 export type RemoveTemplateItemInput = {
   templateId: string;
@@ -140,10 +150,8 @@ type TemplateItemRecord = {
   itemName: string;
   itemNormalizedName: string;
   categoryName: string;
-  quantity: number;
-  unit: string;
   sortOrder: number;
-};
+} & TemplateMeasurementValue;
 
 type CatalogItemRecord = {
   id: string;
@@ -163,6 +171,8 @@ type CategoryResolution = {
   id: string | null;
   name: string;
 };
+
+const OPTIONAL_TEMPLATE_MEASUREMENTS_ENABLED = true;
 
 function asRecord(value: unknown): JsonRecord | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
@@ -199,6 +209,11 @@ function isScope(value: unknown): value is Scope {
 
 function cleanText(value: string) {
   return value.trim().replace(/\s+/g, " ");
+}
+
+function cleanNullableText(value: string | null | undefined) {
+  const cleaned = cleanText(value ?? "");
+  return cleaned.length > 0 ? cleaned : null;
 }
 
 function normalizeName(value: string) {
@@ -272,8 +287,9 @@ function mapTemplateItemRecord(value: unknown): TemplateItemRecord | null {
   const itemName = asString(record.item_name);
   const itemNormalizedName = asString(record.item_normalized_name);
   const categoryName = asString(record.category_name);
-  const quantity = asNumber(record.quantity);
-  const unit = asString(record.unit);
+  const quantity = record.quantity === null ? null : asNumber(record.quantity);
+  const unit =
+    record.unit === null ? null : cleanNullableText(asString(record.unit));
   const sortOrder = asNumber(record.sort_order);
   const catalogItemId =
     record.catalog_item_id === null ? null : asString(record.catalog_item_id);
@@ -284,10 +300,26 @@ function mapTemplateItemRecord(value: unknown): TemplateItemRecord | null {
     !itemName ||
     !itemNormalizedName ||
     !categoryName ||
-    quantity === null ||
-    !unit ||
     sortOrder === null
   ) {
+    return null;
+  }
+
+  if (quantity === null && unit === null) {
+    return {
+      id,
+      templateId,
+      catalogItemId,
+      itemName,
+      itemNormalizedName,
+      categoryName,
+      quantity: null,
+      unit: null,
+      sortOrder,
+    };
+  }
+
+  if (quantity === null || unit === null || quantity <= 0) {
     return null;
   }
 
@@ -351,11 +383,15 @@ function mapCatalogItemRecord(value: unknown): CatalogItemRecord | null {
 function toTemplateSummary(
   template: TemplateRecord,
   itemCounts: Map<string, number>,
+  effectiveDefaultTemplateId: string | null = null,
 ): TemplateSummary {
   return {
     id: template.id,
     name: template.name,
-    isDefault: template.isDefault,
+    isDefault:
+      effectiveDefaultTemplateId !== null
+        ? template.id === effectiveDefaultTemplateId
+        : template.isDefault,
     itemCount: itemCounts.get(template.id) ?? 0,
     createdAt: template.createdAt,
     updatedAt: template.updatedAt,
@@ -396,6 +432,10 @@ async function getLoaderContext() {
     getCurrentUserId(),
     createSupabaseServerClient(),
   ]);
+
+  if (userId.length > 0) {
+    await ensureProfileForUserId(userId);
+  }
 
   return {
     userId,
@@ -549,6 +589,26 @@ async function loadOwnedTemplate(
   }
 
   return mapTemplateRecord(result.data);
+}
+
+async function loadTemplatesForUser(
+  supabase: SupabaseClient,
+  userId: string,
+): Promise<TemplateRecord[]> {
+  const templatesResult = await supabase
+    .from("packing_templates")
+    .select("id, name, is_default, created_at, updated_at")
+    .eq("profile_id", userId)
+    .order("is_default", { ascending: false })
+    .order("updated_at", { ascending: false });
+
+  if (templatesResult.error) {
+    throw new Error(templatesResult.error.message);
+  }
+
+  return (templatesResult.data ?? [])
+    .map(mapTemplateRecord)
+    .filter((value): value is TemplateRecord => value !== null);
 }
 
 async function loadAccessibleCategoryById(
@@ -708,29 +768,67 @@ function validateTemplateName(name: string) {
 
 function validateItemPayload(input: {
   itemName: string;
-  quantity: number;
-  unit: string;
-}) {
+} & TemplateMeasurementInput): { itemName: string } & TemplateMeasurementValue {
   const itemName = cleanText(input.itemName);
-  const unit = cleanText(input.unit);
+  const unit = cleanNullableText(input.unit);
+  const hasQuantity = input.quantity !== undefined && input.quantity !== null;
+  const hasUnit = unit !== null;
 
   if (!itemName) {
     throw new Error("Item name cannot be empty.");
   }
 
-  if (!Number.isFinite(input.quantity) || input.quantity <= 0) {
-    throw new Error("Quantity must be greater than 0.");
+  if (!hasQuantity && !hasUnit) {
+    return {
+      itemName,
+      quantity: null,
+      unit: null,
+    } satisfies { itemName: string } & QuantityValue;
   }
 
-  if (!unit) {
-    throw new Error("Unit cannot be empty.");
+  if (!hasQuantity || !hasUnit) {
+    throw new Error(
+      "Leave both quantity and unit blank for single items, or fill in both.",
+    );
+  }
+
+  const quantity = input.quantity;
+
+  if (typeof quantity !== "number" || !Number.isFinite(quantity) || quantity <= 0) {
+    throw new Error("Quantity must be greater than 0.");
   }
 
   return {
     itemName,
-    quantity: input.quantity,
+    quantity,
     unit,
   };
+}
+
+function getEffectiveDefaultTemplateId(templates: TemplateRecord[]) {
+  return templates.find((template) => template.isDefault)?.id ?? templates[0]?.id ?? null;
+}
+
+async function setDefaultTemplateForUser(
+  supabase: SupabaseClient,
+  userId: string,
+  templateId: string,
+) {
+  const result = await supabase.rpc("set_default_packing_template", {
+    p_profile_id: userId,
+    p_template_id: templateId,
+  });
+
+  if (result.error) {
+    throw new Error(result.error.message);
+  }
+
+  const resolvedTemplateId = asString(result.data);
+  if (!resolvedTemplateId) {
+    throw new Error("The default template update did not return a template id.");
+  }
+
+  return resolvedTemplateId;
 }
 
 function exactCatalogMatch(
@@ -807,20 +905,7 @@ export async function getTemplatesForCurrentUser(): Promise<TemplatesLoaderResul
   }
 
   try {
-    const templatesResult = await supabase
-      .from("packing_templates")
-      .select("id, name, is_default, created_at, updated_at")
-      .eq("profile_id", userId)
-      .order("is_default", { ascending: false })
-      .order("updated_at", { ascending: false });
-
-    if (templatesResult.error) {
-      throw new Error(templatesResult.error.message);
-    }
-
-    const templateRecords = (templatesResult.data ?? [])
-      .map(mapTemplateRecord)
-      .filter((value): value is TemplateRecord => value !== null);
+    const templateRecords = await loadTemplatesForUser(supabase, userId);
 
     if (templateRecords.length === 0) {
       return {
@@ -842,6 +927,7 @@ export async function getTemplatesForCurrentUser(): Promise<TemplatesLoaderResul
     }
 
     const itemCounts = new Map<string, number>();
+    const effectiveDefaultTemplateId = getEffectiveDefaultTemplateId(templateRecords);
 
     for (const row of itemCountsResult.data ?? []) {
       const record = asRecord(row);
@@ -856,7 +942,7 @@ export async function getTemplatesForCurrentUser(): Promise<TemplatesLoaderResul
 
     return {
       templates: templateRecords.map((template) =>
-        toTemplateSummary(template, itemCounts),
+        toTemplateSummary(template, itemCounts, effectiveDefaultTemplateId),
       ),
       ...buildLoaderState(true, true),
     };
@@ -875,6 +961,12 @@ export async function getTemplatesForCurrentUser(): Promise<TemplatesLoaderResul
 export async function getDefaultTemplateForCurrentUser() {
   const result = await getTemplatesForCurrentUser();
   return result.templates.find((template) => template.isDefault) ?? null;
+}
+
+export async function getTemplateEditorCapabilities(): Promise<TemplateEditorCapabilities> {
+  return {
+    supportsOptionalMeasurements: OPTIONAL_TEMPLATE_MEASUREMENTS_ENABLED,
+  };
 }
 
 export async function getTemplateDetails(
@@ -905,7 +997,11 @@ export async function getTemplateDetails(
   }
 
   try {
-    const template = await loadOwnedTemplate(supabase, userId, templateId);
+    const templates = await loadTemplatesForUser(supabase, userId);
+    const effectiveDefaultTemplateId = getEffectiveDefaultTemplateId(templates);
+    const template =
+      templates.find((candidate) => candidate.id === templateId) ?? null;
+
     if (!template) {
       return {
         detail: null,
@@ -933,7 +1029,11 @@ export async function getTemplateDetails(
 
     return {
       detail: {
-        template: toTemplateSummary(template, new Map([[template.id, items.length]])),
+        template: toTemplateSummary(
+          template,
+          new Map([[template.id, items.length]]),
+          effectiveDefaultTemplateId,
+        ),
         items,
       },
       ...buildLoaderState(true, true),
@@ -1033,28 +1133,13 @@ export async function createTemplate(
   try {
     const name = validateTemplateName(input.name);
     const { supabase, userId } = context.data;
-
-    const existingTemplatesResult = await supabase
-      .from("packing_templates")
-      .select("id, is_default, created_at, updated_at, name")
-      .eq("profile_id", userId)
-      .order("created_at", { ascending: true });
-
-    if (existingTemplatesResult.error) {
-      throw new Error(existingTemplatesResult.error.message);
-    }
-
-    const existingTemplates = (existingTemplatesResult.data ?? [])
-      .map(mapTemplateRecord)
-      .filter((value): value is TemplateRecord => value !== null);
-
-    const hasDefault = existingTemplates.some((template) => template.isDefault);
+    const existingTemplates = await loadTemplatesForUser(supabase, userId);
     const insertResult = await supabase
       .from("packing_templates")
       .insert({
         profile_id: userId,
         name,
-        is_default: existingTemplates.length === 0 || !hasDefault,
+        is_default: existingTemplates.length === 0,
       })
       .select("id")
       .single();
@@ -1137,49 +1222,14 @@ export async function deleteTemplate(
     const { supabase, userId } = context.data;
 
     await ensureOwnedTemplateOrThrow(supabase, userId, input.templateId);
-
-    const templatesResult = await supabase
-      .from("packing_templates")
-      .select("id, name, is_default, created_at, updated_at")
-      .eq("profile_id", userId)
-      .order("created_at", { ascending: true });
-
-    if (templatesResult.error) {
-      throw new Error(templatesResult.error.message);
-    }
-
-    const templates = (templatesResult.data ?? [])
-      .map(mapTemplateRecord)
-      .filter((value): value is TemplateRecord => value !== null);
+    const templates = await loadTemplatesForUser(supabase, userId);
+    const deletedTemplate =
+      templates.find((template) => template.id === input.templateId) ?? null;
 
     const remainingTemplates = templates.filter(
       (template) => template.id !== input.templateId,
     );
-
-    if (remainingTemplates.length > 0) {
-      const nextDefaultTemplate =
-        remainingTemplates.find((template) => template.isDefault) ??
-        remainingTemplates[0];
-
-      const clearDefaultResult = await supabase
-        .from("packing_templates")
-        .update({ is_default: false })
-        .eq("profile_id", userId);
-
-      if (clearDefaultResult.error) {
-        throw new Error(clearDefaultResult.error.message);
-      }
-
-      const setDefaultResult = await supabase
-        .from("packing_templates")
-        .update({ is_default: true })
-        .eq("id", nextDefaultTemplate.id)
-        .eq("profile_id", userId);
-
-      if (setDefaultResult.error) {
-        throw new Error(setDefaultResult.error.message);
-      }
-    }
+    const nextDefaultTemplateId = getEffectiveDefaultTemplateId(remainingTemplates);
 
     const deleteResult = await supabase
       .from("packing_templates")
@@ -1191,12 +1241,19 @@ export async function deleteTemplate(
       throw new Error(deleteResult.error.message);
     }
 
+    if (
+      nextDefaultTemplateId &&
+      (deletedTemplate?.isDefault || !remainingTemplates.some((template) => template.isDefault))
+    ) {
+      await setDefaultTemplateForUser(supabase, userId, nextDefaultTemplateId);
+    }
+
     await revalidateTemplatePaths(input.templateId);
 
     return {
       ok: true,
       data: {
-        nextTemplateId: remainingTemplates[0]?.id ?? null,
+        nextTemplateId: nextDefaultTemplateId,
       },
     };
   } catch (error) {
@@ -1220,25 +1277,7 @@ export async function setDefaultTemplate(
     const { supabase, userId } = context.data;
 
     await ensureOwnedTemplateOrThrow(supabase, userId, input.templateId);
-
-    const clearDefaultResult = await supabase
-      .from("packing_templates")
-      .update({ is_default: false })
-      .eq("profile_id", userId);
-
-    if (clearDefaultResult.error) {
-      throw new Error(clearDefaultResult.error.message);
-    }
-
-    const setDefaultResult = await supabase
-      .from("packing_templates")
-      .update({ is_default: true })
-      .eq("id", input.templateId)
-      .eq("profile_id", userId);
-
-    if (setDefaultResult.error) {
-      throw new Error(setDefaultResult.error.message);
-    }
+    await setDefaultTemplateForUser(supabase, userId, input.templateId);
 
     await revalidateTemplatePaths(input.templateId);
 
@@ -1295,7 +1334,6 @@ export async function addTemplateItem(
     let itemName = selectedSuggestion?.name ?? validated.itemName;
     let itemNormalizedName =
       selectedSuggestion?.normalizedName ?? normalizeName(validated.itemName);
-    const unit = validated.unit;
 
     if (input.saveToCatalog && !selectedSuggestion) {
       const categoryForCatalog = await ensureCategoryForCatalogSave(
@@ -1363,7 +1401,7 @@ export async function addTemplateItem(
         item_normalized_name: itemNormalizedName,
         category_name: category.name,
         quantity: validated.quantity,
-        unit,
+        unit: validated.unit,
         sort_order: sortOrder,
       })
       .select("id")

@@ -18,6 +18,14 @@ When continuing from the current foundation and implementing the new product-dir
 3. `docs/prompts/06-ui-polish-first-run.md`
 4. A final integration/QA pass using the existing coordinator prompt plus the new product spec
 
+## Recovery Run Order
+When fixing the current regressions and resetting the product back to the intended workflow, use:
+1. `docs/prompts/11-starter-data-scale-and-curation.md`
+2. `docs/prompts/09-template-recovery.md`
+3. `docs/prompts/10-trip-creation-recovery.md`
+4. `docs/prompts/12-ui-simplification.md`
+5. `docs/prompts/13-recovery-coordinator-qa.md`
+
 This order works both sequentially and in parallel. If you run in parallel, freeze the shared contracts first and do not let worker threads edit outside their write scopes.
 
 ## Shared Rules For Every Thread
@@ -47,6 +55,11 @@ This order works both sequentially and in parallel. If you run in parallel, free
 - `codex/packing-measurements-seeds`
 - `codex/packing-default-template-basic-mode`
 - `codex/packing-ui-polish`
+- `codex/packing-template-recovery`
+- `codex/packing-trip-recovery`
+- `codex/packing-data-scale`
+- `codex/packing-ui-simplification`
+- `codex/packing-recovery-qa`
 
 ## Suggested Merge Order
 1. Data + domain
@@ -54,3 +67,10 @@ This order works both sequentially and in parallel. If you run in parallel, free
 3. Templates + catalog
 4. Trips + active journey
 5. Coordinator integration and QA
+
+## Recovery Merge Order
+1. Starter data scale and curation
+2. Template recovery
+3. Trip creation recovery
+4. UI simplification
+5. Recovery coordinator and QA

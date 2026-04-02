@@ -1,4 +1,5 @@
 import type { LegStatus, TripMode, TripStatus } from "@/components/trips/types";
+import { formatMeasurementLabel } from "@/lib/domain/measurements";
 
 export function formatTripDate(value: string) {
   return new Intl.DateTimeFormat("en", {
@@ -76,4 +77,16 @@ export function formatChecklistProgress(packedCount: number, totalCount: number)
   }
 
   return `${packedCount} of ${totalCount} packed`;
+}
+
+export function formatTripItemMeasurement(value: {
+  quantity: number | null;
+  unit: string | null;
+}) {
+  return value.quantity !== null && value.unit !== null
+    ? formatMeasurementLabel({
+        quantity: value.quantity,
+        unit: value.unit,
+      })
+    : null;
 }

@@ -1,11 +1,17 @@
 import Link from "next/link";
-import { ArrowRight, ShieldCheck } from "lucide-react";
+import { ArrowRight, CheckCircle2, Sparkles } from "lucide-react";
 import { redirect } from "next/navigation";
 
 import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   getBootstrapPath,
   getCurrentSessionIdentity,
@@ -63,70 +69,68 @@ export default async function Home({
   if (identity && !authErrorValue) {
     redirect("/dashboard");
   }
+
   const isSupabaseConfigured = getSupabaseEnv().isConfigured;
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(255,247,237,0.96),rgba(255,255,255,0.94),rgba(226,232,240,0.86))] px-4 py-8 text-slate-950 sm:px-6 lg:px-8">
-      <div className="mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-6xl flex-col justify-center gap-6">
-        <section className="grid gap-6 lg:grid-cols-[minmax(0,1.2fr)_380px]">
-          <Card className="border border-white/70 bg-white/80 shadow-[0_24px_70px_rgba(15,23,42,0.12)] backdrop-blur">
+    <main className="packing-stage min-h-screen px-4 py-8 text-slate-950 sm:px-6 lg:px-8">
+      <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-72 bg-[radial-gradient(circle_at_top,rgba(251,191,36,0.28),transparent_55%)]" />
+      <div className="pointer-events-none absolute right-[8%] top-28 -z-10 size-56 rounded-full bg-[radial-gradient(circle,rgba(125,211,252,0.18),transparent_68%)] blur-3xl" />
+
+      <div className="relative mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-6xl flex-col justify-center gap-5">
+        <section className="grid gap-5 lg:grid-cols-[minmax(0,1.15fr)_360px] lg:items-center">
+          <Card className="packing-panel border-0 bg-[linear-gradient(155deg,rgba(255,255,255,0.88),rgba(255,248,238,0.78),rgba(240,249,255,0.74))]">
             <CardHeader className="gap-5">
               <div className="flex flex-wrap items-center gap-2">
                 <Badge
                   variant="outline"
-                  className="gap-1.5 border-emerald-200 bg-emerald-50 text-emerald-900"
+                  className="gap-1.5 border-emerald-200 bg-emerald-50/90 text-emerald-950"
                 >
-                  <ShieldCheck className="size-3.5" />
-                  Google or anonymous
+                  <Sparkles className="size-3.5" />
+                  Packing App
                 </Badge>
-                <Badge variant="outline" className="border-slate-200 bg-white">
-                  Same packing product
-                </Badge>
+                <div className="inline-flex items-center gap-2 rounded-full border border-slate-200/80 bg-white/80 px-3 py-1 text-xs font-medium text-slate-600">
+                  <CheckCircle2 className="size-3.5 text-emerald-600" />
+                  Default template included
+                </div>
               </div>
+
               <div className="space-y-4">
-                <h1 className="max-w-4xl text-4xl font-semibold tracking-tight text-balance sm:text-5xl">
-                  Plan trips with a Google account or stay in a browser-only
-                  anonymous workspace.
+                <h1 className="max-w-4xl font-heading text-5xl leading-none text-balance sm:text-6xl">
+                  Pack for the trip ahead.
                 </h1>
-                <p className="max-w-3xl text-base leading-7 text-slate-600 sm:text-lg">
-                  Templates, saved trips, and active-leg checklists work in both
-                  modes. Anonymous data stays tied to this browser cookie, while
-                  Google-backed data follows your authenticated Supabase profile.
+                <p className="max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
+                  Open the starter list, make a few changes, and turn it into a
+                  live checklist when the trip starts.
                 </p>
               </div>
             </CardHeader>
-            <CardContent className="grid gap-4 sm:grid-cols-2">
-              <div className="rounded-[1.5rem] border border-slate-200/80 bg-slate-50/90 p-5">
-                <p className="text-sm font-medium text-slate-950">Anonymous mode</p>
-                <p className="mt-2 text-sm leading-6 text-slate-600">
-                  Fastest way in. Your workspace stays on this device with the
-                  `packing_app_user_id` cookie.
-                </p>
-              </div>
-              <div className="rounded-[1.5rem] border border-amber-200/80 bg-amber-50/80 p-5">
-                <p className="text-sm font-medium text-slate-950">Google mode</p>
-                <p className="mt-2 text-sm leading-6 text-slate-600">
-                  Use the same product with a Google sign-in and a Supabase auth
-                  session instead of the anonymous cookie fallback.
-                </p>
-              </div>
+
+            <CardContent>
+              <p className="text-sm leading-6 text-slate-600">
+                Start with the included default template instead of a blank
+                screen.
+              </p>
             </CardContent>
           </Card>
 
-          <Card className="border border-border/70 bg-card/92 shadow-sm">
+          <Card className="packing-panel border-0">
             <CardHeader className="gap-3">
-              <CardTitle>Choose how to continue</CardTitle>
+              <CardTitle className="text-2xl">Start packing</CardTitle>
+              <CardDescription className="leading-6">
+                Choose a workspace. The default template is already waiting.
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {authErrorValue ? (
-                <div className="rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+                <div className="rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm leading-6 text-destructive">
                   {decodeURIComponent(authErrorValue)}
                 </div>
               ) : null}
 
               <Button
                 nativeButton={false}
-                className="h-11 w-full rounded-xl"
+                className="h-12 w-full rounded-2xl bg-slate-950 text-white shadow-[0_16px_30px_rgba(15,23,42,0.18)] hover:bg-slate-800"
                 render={<Link href={getBootstrapPath(nextPath)} />}
               >
                 Continue anonymously
@@ -135,20 +139,21 @@ export default async function Home({
 
               <GoogleSignInButton
                 nextPath={nextPath}
-                className="h-11 w-full rounded-xl"
+                variant="outline"
+                className="h-12 w-full rounded-2xl border-slate-300 bg-white/88"
                 disabled={!isSupabaseConfigured}
+                label="Continue with Google"
               />
 
-              <div className="rounded-2xl border border-border/70 bg-background/80 px-4 py-3 text-sm leading-6 text-muted-foreground">
-                If you begin anonymously and later sign in with Google, the app
-                merges that anonymous workspace into your authenticated profile.
-                Afterward, signing out starts a fresh anonymous workspace.
-              </div>
+              <p className="text-sm leading-6 text-slate-600">
+                {isSupabaseConfigured
+                  ? "Start on this browser now and add Google later without losing the same workspace."
+                  : "Google sign-in is not configured here yet, so start on this browser."}
+              </p>
 
               {!isSupabaseConfigured ? (
-                <div className="rounded-2xl border border-amber-300/60 bg-amber-50/85 px-4 py-3 text-sm leading-6 text-amber-950">
-                  Google sign-in is unavailable until Supabase environment
-                  variables are configured for the app.
+                <div className="rounded-2xl border border-amber-300/60 bg-amber-50/[0.85] px-4 py-3 text-sm leading-6 text-amber-950">
+                  Google sign-in is not ready in this environment yet.
                 </div>
               ) : null}
             </CardContent>

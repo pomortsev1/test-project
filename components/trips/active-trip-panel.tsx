@@ -8,7 +8,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { formatTripMode } from "@/components/trips/format";
+import {
+  formatTripItemMeasurement,
+  formatTripMode,
+} from "@/components/trips/format";
 import type { TripDetails } from "@/components/trips/types";
 import type { Trip as DashboardTrip } from "@/lib/domain/types";
 
@@ -120,23 +123,29 @@ export function ActiveTripPanel({
               <Badge variant="outline">{group.items.length} items</Badge>
             </div>
             <div className="mt-4 space-y-3">
-              {group.items.map((item) => (
-                <div
-                  key={item.tripItemId}
-                  className="flex items-start justify-between gap-3 rounded-xl border border-border/60 px-3 py-2"
-                >
-                  <div>
-                    <p className="font-medium">{item.itemName}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {item.quantity} {item.unit}
-                    </p>
+              {group.items.map((item) => {
+                const measurementLabel = formatTripItemMeasurement(item);
+
+                return (
+                  <div
+                    key={item.tripItemId}
+                    className="flex items-start justify-between gap-3 rounded-xl border border-border/60 px-3 py-2"
+                  >
+                    <div>
+                      <p className="font-medium">{item.itemName}</p>
+                      {measurementLabel ? (
+                        <p className="text-sm text-muted-foreground">
+                          {measurementLabel}
+                        </p>
+                      ) : null}
+                    </div>
+                    <Badge variant={item.isPacked ? "secondary" : "outline"} className="gap-1.5">
+                      {item.isPacked ? <CheckCircle2 className="size-3.5" /> : null}
+                      {item.isPacked ? "Packed" : "To pack"}
+                    </Badge>
                   </div>
-                  <Badge variant={item.isPacked ? "secondary" : "outline"} className="gap-1.5">
-                    {item.isPacked ? <CheckCircle2 className="size-3.5" /> : null}
-                    {item.isPacked ? "Packed" : "To pack"}
-                  </Badge>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         ))}
