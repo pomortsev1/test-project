@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import {
   ArrowLeft,
   CheckCircle2,
@@ -47,16 +47,71 @@ type TripDetailProps = {
 export function TripDetail({ trip }: TripDetailProps) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
-  const [pendingItemId, setPendingItemId] = useState<string | null>(null);
+  const [isRouteActionPending, startRouteActionTransition] = useTransition();
+  const [, startChecklistTransition] = useTransition();
+  const [pendingChecklistItemIds, setPendingChecklistItemIds] = useState<
+    Record<string, true>
+  >({});
+  const [optimisticPackedByItemId, setOptimisticPackedByItemId] = useState<
+    Record<string, boolean>
+  >({});
+  const pendingChecklistItemIdsRef = useRef<Record<string, true>>({});
   const checklistIsInteractive =
     trip.status === "active" &&
     trip.activeLeg !== null &&
     trip.checklistLegId === trip.activeLeg.id &&
     trip.checklistLegStatus === "active";
+
+  useEffect(() => {
+    pendingChecklistItemIdsRef.current = {};
+    setPendingChecklistItemIds({});
+    setOptimisticPackedByItemId({});
+  }, [trip.id, trip.checklistLegId]);
+
+  const checklistGroups = useMemo(
+    () =>
+      trip.checklistGroups.map((group) => ({
+        ...group,
+        items: group.items.map((item) => ({
+          ...item,
+          isPacked:
+            optimisticPackedByItemId[item.tripItemId] ?? item.isPacked,
+        })),
+      })),
+    [optimisticPackedByItemId, trip.checklistGroups],
+  );
+
+  const checklistPackedCount = useMemo(
+    () =>
+      checklistGroups.reduce(
+        (packedCount, group) =>
+          packedCount +
+          group.items.reduce(
+            (groupPackedCount, item) =>
+              groupPackedCount + (item.isPacked ? 1 : 0),
+            0,
+          ),
+        0,
+      ),
+    [checklistGroups],
+  );
+
+  const legs = useMemo(
+    () =>
+      trip.legs.map((leg) =>
+        leg.id === trip.checklistLegId
+          ? {
+              ...leg,
+              packedCount: checklistPackedCount,
+            }
+          : leg,
+      ),
+    [checklistPackedCount, trip.checklistLegId, trip.legs],
+  );
+
   const checklistSummary = trip.checklistRouteLabel
     ? `${trip.checklistRouteLabel} • ${formatChecklistProgress(
-        trip.checklistPackedCount,
+        checklistPackedCount,
         trip.checklistTotalCount,
       )}`
     : "No checklist yet.";
@@ -96,10 +151,10 @@ export function TripDetail({ trip }: TripDetailProps) {
                 {trip.canStart ? (
                   <Button
                     type="button"
-                    disabled={isPending}
+                    disabled={isRouteActionPending}
                     onClick={() => {
                       setError(null);
-                      startTransition(async () => {
+                      startRouteActionTransition(async () => {
                         try {
                           await startTrip({ tripId: trip.id });
                           router.refresh();
@@ -120,10 +175,10 @@ export function TripDetail({ trip }: TripDetailProps) {
                 {trip.canArrive ? (
                   <Button
                     type="button"
-                    disabled={isPending}
+                    disabled={isRouteActionPending}
                     onClick={() => {
                       setError(null);
-                      startTransition(async () => {
+                      startRouteActionTransition(async () => {
                         try {
                           await arriveAtCurrentStop({ tripId: trip.id });
                           router.refresh();
@@ -145,10 +200,10 @@ export function TripDetail({ trip }: TripDetailProps) {
                   <Button
                     type="button"
                     variant="outline"
-                    disabled={isPending}
+                    disabled={isRouteActionPending}
                     onClick={() => {
                       setError(null);
-                      startTransition(async () => {
+                      startRouteActionTransition(async () => {
                         try {
                           await goHomeNow({ tripId: trip.id });
                           router.refresh();
@@ -193,7 +248,7 @@ export function TripDetail({ trip }: TripDetailProps) {
                 </p>
                 <p className="mt-2 font-medium">
                   {formatChecklistProgress(
-                    trip.checklistPackedCount,
+                    checklistPackedCount,
                     trip.checklistTotalCount,
                   )}
                 </p>
@@ -233,7 +288,7 @@ export function TripDetail({ trip }: TripDetailProps) {
               </div>
 
               <div className="space-y-3">
-                {trip.legs.map((leg) => {
+                {legs.map((leg) => {
                   const isActiveChecklistLeg = trip.checklistLegId === leg.id;
 
                   return (
@@ -285,7 +340,7 @@ export function TripDetail({ trip }: TripDetailProps) {
                   This trip doesn&apos;t have any snapshot items yet.
                 </div>
               ) : (
-                trip.checklistGroups.map((group) => (
+                checklistGroups.map((group) => (
                   <div key={group.categoryName} className="space-y-3">
                     <div className="flex items-center justify-between gap-3">
                       <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-muted-foreground">
@@ -297,13 +352,17 @@ export function TripDetail({ trip }: TripDetailProps) {
                     <div className="space-y-2">
                       {group.items.map((item) => {
                         const isDisabled =
-                          !checklistIsInteractive || isPending || pendingItemId === item.tripItemId;
+                          !checklistIsInteractive ||
+                          isRouteActionPending ||
+                          Boolean(
+                            pendingChecklistItemIds[item.tripItemId],
+                          );
                         const measurementLabel = formatTripItemMeasurement(item);
 
                         return (
                           <label
                             key={item.tripItemId}
-                            className={`flex cursor-pointer items-start gap-3 rounded-2xl border px-4 py-3 transition ${
+                            className={`flex cursor-pointer items-center gap-3 rounded-2xl border px-4 py-3 transition ${
                               item.isPacked
                                 ? "border-primary/25 bg-primary/5"
                                 : "border-border/70 bg-background/80"
@@ -314,46 +373,90 @@ export function TripDetail({ trip }: TripDetailProps) {
                               checked={item.isPacked}
                               disabled={isDisabled}
                               onChange={(event) => {
+                                const checklistLegId = trip.checklistLegId;
+                                const nextPackedState =
+                                  event.currentTarget.checked;
+
+                                if (
+                                  !checklistLegId ||
+                                  pendingChecklistItemIdsRef.current[
+                                    item.tripItemId
+                                  ]
+                                ) {
+                                  return;
+                                }
+
                                 setError(null);
-                                setPendingItemId(item.tripItemId);
+                                pendingChecklistItemIdsRef.current = {
+                                  ...pendingChecklistItemIdsRef.current,
+                                  [item.tripItemId]: true,
+                                };
+                                setPendingChecklistItemIds(
+                                  pendingChecklistItemIdsRef.current,
+                                );
+                                setOptimisticPackedByItemId((currentState) => ({
+                                  ...currentState,
+                                  [item.tripItemId]: nextPackedState,
+                                }));
 
-                                startTransition(async () => {
+                                startChecklistTransition(async () => {
                                   try {
-                                    if (!trip.checklistLegId) {
-                                      return;
-                                    }
-
-                                    await toggleTripLegItemCheck({
+                                    const result = await toggleTripLegItemCheck({
                                       tripId: trip.id,
-                                      legId: trip.checklistLegId,
+                                      legId: checklistLegId,
                                       tripItemId: item.tripItemId,
-                                      isPacked: event.target.checked,
+                                      isPacked: nextPackedState,
                                     });
-                                    router.refresh();
+                                    setOptimisticPackedByItemId(
+                                      (currentState) => ({
+                                        ...currentState,
+                                        [item.tripItemId]: result.isPacked,
+                                      }),
+                                    );
                                   } catch (actionError) {
+                                    setOptimisticPackedByItemId(
+                                      (currentState) => {
+                                        const nextState = {
+                                          ...currentState,
+                                        };
+
+                                        delete nextState[item.tripItemId];
+                                        return nextState;
+                                      },
+                                    );
                                     setError(
                                       actionError instanceof Error
                                         ? actionError.message
                                         : "Unable to update the checklist item.",
                                     );
                                   } finally {
-                                    setPendingItemId(null);
+                                    const nextPendingChecklistItemIds = {
+                                      ...pendingChecklistItemIdsRef.current,
+                                    };
+
+                                    delete nextPendingChecklistItemIds[
+                                      item.tripItemId
+                                    ];
+                                    pendingChecklistItemIdsRef.current =
+                                      nextPendingChecklistItemIds;
+                                    setPendingChecklistItemIds(
+                                      nextPendingChecklistItemIds,
+                                    );
                                   }
                                 });
                               }}
-                              className="mt-0.5 size-4 rounded border-border"
+                              className="size-4 rounded border-border"
                             />
-                            <div className="flex-1">
-                              <div className="flex flex-wrap items-center justify-between gap-3">
-                                <div>
-                                  <p className="font-medium">{item.itemName}</p>
-                                  {measurementLabel ? (
-                                    <p className="text-sm text-muted-foreground">
-                                      {measurementLabel}
-                                    </p>
-                                  ) : null}
-                                </div>
-
+                            <div className="flex min-w-0 flex-1 items-center justify-between gap-3">
+                              <p className="min-w-0 flex-1 truncate font-medium">
+                                {item.itemName}
+                              </p>
+                              <div className="flex shrink-0 items-center gap-3">
+                                {measurementLabel ? (
+                                  <p className="text-sm text-muted-foreground">
+                                    {measurementLabel}
+                                  </p>
+                                ) : null}
                                 {item.isPacked ? (
                                   <CheckCircle2 className="size-4 text-primary" />
                                 ) : (
@@ -400,10 +503,10 @@ export function TripDetail({ trip }: TripDetailProps) {
                     type="button"
                     variant="outline"
                     className="mt-3"
-                    disabled={isPending}
+                    disabled={isRouteActionPending}
                     onClick={() => {
                       setError(null);
-                      startTransition(async () => {
+                      startRouteActionTransition(async () => {
                         try {
                           await goHomeNow({ tripId: trip.id });
                           router.refresh();

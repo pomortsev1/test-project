@@ -15,6 +15,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { formatTripMode } from "@/components/trips/format";
+import { buildTripNameFromDestinations } from "@/components/trips/trip-name";
 import type { TripMode, TripTemplateOption } from "@/components/trips/types";
 
 type TripPlannerProps = {
@@ -41,6 +42,7 @@ export function TripPlanner({ templates }: TripPlannerProps) {
   const [isPending, startTransition] = useTransition();
   const deferredStops = useDeferredValue(stops);
   const visibleStops = buildVisibleStops(mode, deferredStops);
+  const generatedName = buildTripNameFromDestinations(visibleStops);
 
   const canCreate = templates.length > 0 && templateId.length > 0;
 
@@ -54,7 +56,8 @@ export function TripPlanner({ templates }: TripPlannerProps) {
               Plan a trip
             </CardTitle>
             <CardDescription>
-              Pick a template, name the trip, and add your stops.
+              Pick a template, add your stops, and we&apos;ll name the trip from the
+              route if you leave it blank.
             </CardDescription>
           </div>
           <Badge variant="outline" className="gap-1.5">
@@ -67,13 +70,18 @@ export function TripPlanner({ templates }: TripPlannerProps) {
       <CardContent className="space-y-5">
         <div className="grid gap-4 md:grid-cols-2">
           <label className="space-y-2">
-            <span className="text-sm font-medium">Trip name</span>
+            <span className="text-sm font-medium">Trip name (optional)</span>
             <input
               value={name}
               onChange={(event) => setName(event.target.value)}
-              placeholder="Spring city break"
+              placeholder={generatedName || "Spring city break"}
               className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none transition focus:border-ring focus:ring-3 focus:ring-ring/20"
             />
+            <p className="text-xs text-muted-foreground">
+              {generatedName
+                ? `Leave blank to use: ${generatedName}`
+                : "Leave blank to generate the trip name from your destinations."}
+            </p>
           </label>
 
           <label className="space-y-2">

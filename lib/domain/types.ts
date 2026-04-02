@@ -138,7 +138,7 @@ export interface TripStopInput {
 
 export interface CreateTripInput {
   mode: TripMode;
-  name: string;
+  name?: string;
   stops: TripStopInput[];
   templateId: string;
 }

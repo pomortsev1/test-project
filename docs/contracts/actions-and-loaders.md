@@ -95,7 +95,8 @@ These contracts are stable enough for worker threads to build against. Keep nami
 - If present, quantity must be positive.
 - If present, unit must be non-empty short text.
 - Quantity and unit must be omitted together for single-instance items.
-- Template name and trip name must be non-empty.
+- Template name must be non-empty.
+- Trip name may be omitted and should then be generated from the ordered destination stops.
 - Stop list must always resolve to at least `Home -> Destination -> Home`.
 - Users must only mutate rows owned by their profile or system-cloned descendants.
 

@@ -7,6 +7,7 @@ import {
   PACKMAP_USER_ID_COOKIE,
   SESSION_USER_ID_COOKIE_NAMES,
 } from "@/lib/domain/constants";
+import { resolveTripName, normalizeTripDestinationName } from "@/components/trips/trip-name";
 import {
   getCurrentSessionIdentity,
   getCurrentUserId as getCurrentSessionUserId,
@@ -121,12 +122,8 @@ function isUuid(value: string | null | undefined): value is string {
   return Boolean(value && UUID_PATTERN.test(value));
 }
 
-function cleanText(value: string) {
-  return value.trim().replace(/\s+/g, " ");
-}
-
 function cleanStopName(value: string) {
-  return cleanText(value);
+  return normalizeTripDestinationName(value);
 }
 
 function normalizeMeasurementPair(value: {
@@ -630,7 +627,7 @@ async function loadLegsForTrip(client: AppSupabaseClient, tripId: string) {
 }
 
 function assertTripName(name: string) {
-  if (cleanText(name).length === 0) {
+  if (name.length === 0) {
     throw new Error("Trip name cannot be empty.");
   }
 }
@@ -811,8 +808,6 @@ export async function getTripDetails(tripId: string): Promise<TripDetails | null
 
 export async function createTripData(input: CreateTripInput) {
   const { client, userId } = await ensureWritableContext();
-  const tripName = cleanText(input.name);
-  assertTripName(tripName);
 
   const { data: template, error: templateError } = await client
     .from("packing_templates")
@@ -840,6 +835,11 @@ export async function createTripData(input: CreateTripInput) {
   }
 
   const routeStops = buildStopsFromInput(input);
+  const tripName = resolveTripName(
+    input.name,
+    routeStops.filter((stop) => stop.kind === "stop").map((stop) => stop.name),
+  );
+  assertTripName(tripName);
 
   let tripId: string | null = null;
 

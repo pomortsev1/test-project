@@ -48,7 +48,7 @@
 
 ## Create Trip
 1. User starts from template selection.
-2. User enters trip name.
+2. User may enter a trip name, or leave it blank to auto-generate one from the route destinations.
 3. User chooses mode:
    - `simple`
    - `multi_stop`
