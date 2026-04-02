@@ -34,10 +34,11 @@ export default async function TripsPage() {
             </Badge>
             <div className="space-y-3">
               <CardTitle className="text-3xl font-semibold tracking-tight text-balance">
-                Build the route, then pack one leg at a time.
+                Plan the route and start packing from leg one.
               </CardTitle>
               <CardDescription className="max-w-3xl text-base leading-7">
-                Start with the default template or pick another saved list.
+                Add where you are going and your checklist becomes live as soon as the
+                trip is created.
               </CardDescription>
             </div>
           </CardHeader>
@@ -50,7 +51,7 @@ export default async function TripsPage() {
               Quick view
             </CardTitle>
             <CardDescription>
-              Active trips stay on top, followed by drafts and finished routes.
+              Active trips stay on top, and new ones start immediately.
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-3">
@@ -95,7 +96,7 @@ export default async function TripsPage() {
         <div className="space-y-1">
           <h2 className="text-2xl font-semibold tracking-tight">Saved trips</h2>
           <p className="text-sm text-muted-foreground">
-            Open any trip to start it or keep packing.
+            Open any trip to keep packing or review the route.
           </p>
         </div>
 

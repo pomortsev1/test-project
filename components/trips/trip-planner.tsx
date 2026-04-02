@@ -56,16 +56,16 @@ export function TripPlanner({ templates }: TripPlannerProps) {
           <div className="space-y-1">
             <CardTitle className="flex items-center gap-2 text-xl">
               <MapPinned className="size-5" />
-              Plan a trip
+              Start your trip
             </CardTitle>
             <CardDescription>
-              Pick a template, add your stops, and we&apos;ll name the trip from the
-              route if you leave it blank.
+              Add your stops and we&apos;ll bring in your usual packing list
+              automatically. If you have extra saved lists, you can switch them here.
             </CardDescription>
           </div>
           <Badge variant="outline" className="gap-1.5">
             <Route className="size-3.5" />
-            Default template first
+            Main list selected first
           </Badge>
         </div>
       </CardHeader>
@@ -88,7 +88,7 @@ export function TripPlanner({ templates }: TripPlannerProps) {
           </label>
 
           <label className="space-y-2">
-            <span className="text-sm font-medium">Template</span>
+            <span className="text-sm font-medium">Packing list</span>
             <select
               value={templateId}
               onChange={(event) => setTemplateId(event.target.value)}
@@ -108,8 +108,8 @@ export function TripPlanner({ templates }: TripPlannerProps) {
             </select>
             <p className="text-xs text-muted-foreground">
               {templates.some((template) => template.isDefault)
-                ? "The default template is selected first."
-                : "Choose any saved template for this trip."}
+                ? "Your main saved list is selected first."
+                : "Choose any saved list for this trip."}
             </p>
           </label>
         </div>

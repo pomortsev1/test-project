@@ -205,4 +205,56 @@
     box-shadow: 0 24px 70px rgba(15, 23, 42, 0.22);
     color: rgb(248 250 252);
   }
+
+  .packing-reveal {
+    animation: packing-rise 620ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .packing-reveal-delay {
+    animation-delay: 110ms;
+  }
+
+  .packing-reveal-delay-2 {
+    animation-delay: 180ms;
+  }
+
+  .packing-reveal-delay-3 {
+    animation-delay: 260ms;
+  }
+
+  .packing-reveal-delay-4 {
+    animation-delay: 340ms;
+  }
+
+  .packing-float {
+    animation: packing-float 8s ease-in-out infinite;
+  }
+
+  .packing-float-delayed {
+    animation: packing-float 9.5s ease-in-out infinite;
+    animation-delay: 900ms;
+  }
+}
+
+@keyframes packing-rise {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 20px, 0) scale(0.985);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes packing-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+
+  50% {
+    transform: translate3d(0, -14px, 0);
+  }
 }
