@@ -41,6 +41,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { useOptionalI18n } from "@/components/i18n/i18n-provider";
 
 const NEW_CATEGORY_VALUE = "__new_category__";
 
@@ -697,6 +698,7 @@ export function TemplateEditor({
   supportsOptionalMeasurements,
 }: TemplateEditorProps) {
   const router = useRouter();
+  const i18n = useOptionalI18n();
   const [name, setName] = useState(detail.template.name);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -867,9 +869,14 @@ export function TemplateEditor({
                     }
 
                     router.push(
-                      result.data.nextTemplateId
-                        ? `/templates/${result.data.nextTemplateId}`
-                        : "/templates",
+                      i18n?.localizePath(
+                        result.data.nextTemplateId
+                          ? `/templates/${result.data.nextTemplateId}`
+                          : "/templates",
+                      ) ??
+                        (result.data.nextTemplateId
+                          ? `/templates/${result.data.nextTemplateId}`
+                          : "/templates"),
                     );
                     router.refresh();
                   });

@@ -19,6 +19,7 @@ import {
   startTrip,
   toggleTripLegItemCheck,
 } from "@/app/actions/trips";
+import { useOptionalI18n } from "@/components/i18n/i18n-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -47,6 +48,8 @@ type TripDetailProps = {
 
 export function TripDetail({ trip }: TripDetailProps) {
   const router = useRouter();
+  const i18n = useOptionalI18n();
+  const t = (value: string) => i18n?.t(value) ?? value;
   const [error, setError] = useState<string | null>(null);
   const [isRouteActionPending, startRouteActionTransition] = useTransition();
   const [, startChecklistTransition] = useTransition();
@@ -115,23 +118,23 @@ export function TripDetail({ trip }: TripDetailProps) {
         checklistPackedCount,
         trip.checklistTotalCount,
       )}`
-    : "No checklist yet.";
+    : t("No checklist yet.");
 
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Link
-          href="/trips"
+          href={i18n?.localizePath("/trips") ?? "/trips"}
           className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground transition hover:text-foreground"
         >
           <ArrowLeft className="size-4" />
-          Back to trips
+          {t("Back to trips")}
         </Link>
         <div className="flex flex-wrap gap-2">
           <Badge variant={getTripStatusBadgeVariant(trip.status)}>
-            {formatTripStatus(trip.status)}
+            {t(formatTripStatus(trip.status))}
           </Badge>
-          <Badge variant="outline">{formatTripMode(trip.mode)}</Badge>
+          <Badge variant="outline">{t(formatTripMode(trip.mode))}</Badge>
           <Badge variant="outline">{formatTripDate(trip.createdAt)}</Badge>
         </div>
       </div>
@@ -163,13 +166,13 @@ export function TripDetail({ trip }: TripDetailProps) {
                           setError(
                             actionError instanceof Error
                               ? actionError.message
-                              : "Unable to start the trip.",
+                              : t("Unable to start the trip."),
                           );
                         }
                       });
                     }}
                   >
-                    Start trip
+                    {t("Start trip")}
                   </Button>
                 ) : null}
 
@@ -187,13 +190,13 @@ export function TripDetail({ trip }: TripDetailProps) {
                           setError(
                             actionError instanceof Error
                               ? actionError.message
-                              : "Unable to complete the leg.",
+                              : t("Unable to complete the leg."),
                           );
                         }
                       });
                     }}
                   >
-                    Arrived
+                    {t("Arrived")}
                   </Button>
                 ) : null}
 
@@ -212,13 +215,13 @@ export function TripDetail({ trip }: TripDetailProps) {
                           setError(
                             actionError instanceof Error
                               ? actionError.message
-                              : "Unable to reroute home right now.",
+                              : t("Unable to reroute home right now."),
                           );
                         }
                       });
                     }}
                   >
-                    Go home now
+                    {t("Go home now")}
                   </Button>
                 ) : null}
               </div>
@@ -227,15 +230,15 @@ export function TripDetail({ trip }: TripDetailProps) {
             <div className="grid gap-3 md:grid-cols-3">
               <div className="rounded-2xl border border-border/70 bg-background/80 p-4">
                 <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                  Template
+                  {t("Template")}
                 </p>
                 <p className="mt-2 font-medium">
-                  {trip.templateName ?? "Snapshot only"}
+                  {trip.templateName ?? t("Snapshot only")}
                 </p>
               </div>
               <div className="rounded-2xl border border-border/70 bg-background/80 p-4">
                 <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                  Current leg
+                  {t("Current leg")}
                 </p>
                 <p className="mt-2 font-medium">
                   {trip.activeLeg
@@ -243,12 +246,12 @@ export function TripDetail({ trip }: TripDetailProps) {
                         trip.activeLeg.fromStopName,
                         trip.activeLeg.toStopName,
                       )
-                    : "Not started yet"}
+                    : t("Not started yet")}
                 </p>
               </div>
               <div className="rounded-2xl border border-border/70 bg-background/80 p-4">
                 <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                  Checklist
+                  {t("Checklist")}
                 </p>
                 <p className="mt-2 font-medium">
                   {formatChecklistProgress(
@@ -272,10 +275,10 @@ export function TripDetail({ trip }: TripDetailProps) {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Route className="size-5" />
-                Journey legs
+                {t("Journey legs")}
               </CardTitle>
               <CardDescription>
-                Each leg keeps its own checklist.
+                {t("Each leg keeps its own checklist.")}
               </CardDescription>
             </CardHeader>
 
@@ -308,10 +311,10 @@ export function TripDetail({ trip }: TripDetailProps) {
                         <div className="space-y-1">
                           <div className="flex items-center gap-2">
                             <span className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                              Leg {leg.position + 1}
+                              {t("Leg")} {leg.position + 1}
                             </span>
                             <Badge variant={getLegStatusBadgeVariant(leg.status)}>
-                              {formatLegStatus(leg.status)}
+                              {t(formatLegStatus(leg.status))}
                             </Badge>
                           </div>
                           <p className="font-medium">
@@ -333,7 +336,7 @@ export function TripDetail({ trip }: TripDetailProps) {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Luggage className="size-5" />
-                Checklist
+                {t("Checklist")}
               </CardTitle>
               <CardDescription>{checklistSummary}</CardDescription>
             </CardHeader>
@@ -341,7 +344,7 @@ export function TripDetail({ trip }: TripDetailProps) {
             <CardContent className="space-y-5">
               {trip.checklistGroups.length === 0 ? (
                 <div className="rounded-2xl border border-dashed border-border/80 bg-muted/30 p-6 text-sm text-muted-foreground">
-                  This trip doesn&apos;t have any snapshot items yet.
+                  {t("This trip doesn't have any snapshot items yet.")}
                 </div>
               ) : (
                 checklistGroups.map((group) => (
@@ -431,7 +434,7 @@ export function TripDetail({ trip }: TripDetailProps) {
                                     setError(
                                       actionError instanceof Error
                                         ? actionError.message
-                                        : "Unable to update the checklist item.",
+                                        : t("Unable to update the checklist item."),
                                     );
                                   } finally {
                                     const nextPendingChecklistItemIds = {
@@ -478,13 +481,13 @@ export function TripDetail({ trip }: TripDetailProps) {
 
               {!checklistIsInteractive && trip.status === "draft" ? (
                 <div className="rounded-2xl border border-border/70 bg-muted/35 px-4 py-3 text-sm text-muted-foreground">
-                  Start the trip to activate the first leg checklist.
+                  {t("Start the trip to activate the first leg checklist.")}
                 </div>
               ) : null}
 
               {!checklistIsInteractive && trip.status === "completed" ? (
                 <div className="rounded-2xl border border-border/70 bg-muted/35 px-4 py-3 text-sm text-muted-foreground">
-                  This trip is complete, so the checklist is read-only.
+                  {t("This trip is complete, so the checklist is read-only.")}
                 </div>
               ) : null}
 
@@ -493,15 +496,15 @@ export function TripDetail({ trip }: TripDetailProps) {
               !trip.canArrive &&
               !trip.canGoHomeNow ? (
                 <div className="rounded-2xl border border-border/70 bg-muted/35 px-4 py-3 text-sm text-muted-foreground">
-                  This checklist is shown for history, not editing.
+                  {t("This checklist is shown for history, not editing.")}
                 </div>
               ) : null}
 
               {trip.canGoHomeNow ? (
                 <div className="rounded-2xl border border-amber-300/60 bg-amber-50/70 p-4 text-sm text-amber-950">
-                  <p className="font-medium">Need to cut the route short?</p>
+                  <p className="font-medium">{t("Need to cut the route short?")}</p>
                   <p className="mt-1">
-                    Skip the remaining stops and switch to a direct leg home.
+                    {t("Skip the remaining stops and switch to a direct leg home.")}
                   </p>
                   <Button
                     type="button"
@@ -518,14 +521,14 @@ export function TripDetail({ trip }: TripDetailProps) {
                           setError(
                             actionError instanceof Error
                               ? actionError.message
-                              : "Unable to reroute home right now.",
+                              : t("Unable to reroute home right now."),
                           );
                         }
                       });
                     }}
                   >
                     <SkipForward className="size-4" />
-                    Skip ahead and head home
+                    {t("Skip ahead and head home")}
                   </Button>
                 </div>
               ) : null}

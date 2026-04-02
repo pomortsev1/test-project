@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Fraunces, Plus_Jakarta_Sans } from "next/font/google";
 
+import { getRequestLocale } from "@/lib/i18n/server";
+
 import "./globals.css";
 
 const sans = Plus_Jakarta_Sans({
@@ -24,14 +26,16 @@ export const metadata: Metadata = {
     "Packmap helps you open the default packing list, turn it into a trip, and pack each leg with a focused checklist.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = await getRequestLocale();
+
   return (
     <html
-      lang="en"
+      lang={locale}
       className={`${sans.variable} ${display.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>

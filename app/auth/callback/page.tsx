@@ -1,11 +1,13 @@
 "use client";
 
-import { Suspense, useEffect } from "react";
+import { Suspense, useCallback, useEffect } from "react";
 import { LoaderCircle } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { AUTH_NEXT_COOKIE_NAMES } from "@/lib/domain/constants";
+import { LOCALE_COOKIE_NAME, normalizeLocale } from "@/lib/i18n/config";
+import { translate } from "@/lib/i18n/shared";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 function readCookie(name: string) {
@@ -37,8 +39,15 @@ function getCookieNames() {
     .filter(Boolean);
 }
 
+function getPageLocale() {
+  const cookieLocale = readCookie(LOCALE_COOKIE_NAME);
+  return normalizeLocale(cookieLocale) ?? "en";
+}
+
 function AuthCallbackContent() {
   const searchParams = useSearchParams();
+  const locale = getPageLocale();
+  const t = useCallback((key: string) => translate(locale, key), [locale]);
 
   useEffect(() => {
     let cancelled = false;
@@ -61,19 +70,15 @@ function AuthCallbackContent() {
 
       if (providerError) {
         window.location.replace(
-          `/?next=${encodeURIComponent(nextPath)}&authError=${encodeURIComponent(
-            providerError
-          )}`
+          `/${locale}?next=${encodeURIComponent(nextPath)}&authError=${encodeURIComponent(providerError)}`
         );
         return;
       }
 
       if (!authCode) {
         window.location.replace(
-          `/?next=${encodeURIComponent(
-            nextPath
-          )}&authError=${encodeURIComponent(
-            "Google sign-in returned without an authorization code."
+          `/${locale}?next=${encodeURIComponent(nextPath)}&authError=${encodeURIComponent(
+            t("Google sign-in returned without an authorization code."),
           )}`
         );
         return;
@@ -83,10 +88,8 @@ function AuthCallbackContent() {
 
       if (!supabase) {
         window.location.replace(
-          `/?next=${encodeURIComponent(
-            nextPath
-          )}&authError=${encodeURIComponent(
-            "Supabase is not configured yet, so Google sign-in cannot complete."
+          `/${locale}?next=${encodeURIComponent(nextPath)}&authError=${encodeURIComponent(
+            t("Supabase is not configured yet, so Google sign-in cannot complete."),
           )}`
         );
         return;
@@ -130,9 +133,7 @@ function AuthCallbackContent() {
         });
         subscription.unsubscribe();
         window.location.replace(
-          `/?next=${encodeURIComponent(nextPath)}&authError=${encodeURIComponent(
-            error.message
-          )}`
+          `/${locale}?next=${encodeURIComponent(nextPath)}&authError=${encodeURIComponent(error.message)}`
         );
         return;
       }
@@ -176,8 +177,8 @@ function AuthCallbackContent() {
         });
         subscription.unsubscribe();
         window.location.replace(
-          `/?next=${encodeURIComponent(nextPath)}&authError=${encodeURIComponent(
-            "Google sign-in completed, but no session was created."
+          `/${locale}?next=${encodeURIComponent(nextPath)}&authError=${encodeURIComponent(
+            t("Google sign-in completed, but no session was created."),
           )}`
         );
       }, 1500);
@@ -188,7 +189,7 @@ function AuthCallbackContent() {
     return () => {
       cancelled = true;
     };
-  }, [searchParams]);
+  }, [locale, searchParams, t]);
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top,rgba(255,247,237,0.96),rgba(255,255,255,0.94),rgba(226,232,240,0.86))] px-4 text-slate-950">
@@ -197,20 +198,20 @@ function AuthCallbackContent() {
           <LoaderCircle className="size-5 animate-spin" />
         </div>
         <h1 className="mt-5 text-2xl font-semibold tracking-tight">
-          Wrapping up Google sign-in
+          {t("Wrapping up Google sign-in")}
         </h1>
         <p className="mt-3 text-sm leading-6 text-slate-600">
-          Finishing Google sign-in...
+          {t("Finishing Google sign-in...")}
         </p>
         <div className="mt-6">
           <Button
             variant="outline"
             className="rounded-full"
             onClick={() => {
-              window.location.assign("/");
+              window.location.assign(`/${locale}`);
             }}
           >
-            Back to home
+            {t("Back to home")}
           </Button>
         </div>
       </div>
@@ -219,6 +220,9 @@ function AuthCallbackContent() {
 }
 
 export default function AuthCallbackPage() {
+  const locale = getPageLocale();
+  const t = (key: string) => translate(locale, key);
+
   return (
     <Suspense
       fallback={
@@ -228,10 +232,10 @@ export default function AuthCallbackPage() {
               <LoaderCircle className="size-5 animate-spin" />
             </div>
             <h1 className="mt-5 text-2xl font-semibold tracking-tight">
-              Wrapping up Google sign-in
+              {t("Wrapping up Google sign-in")}
             </h1>
             <p className="mt-3 text-sm leading-6 text-slate-600">
-              Loading callback details...
+              {t("Loading callback details...")}
             </p>
           </div>
         </main>

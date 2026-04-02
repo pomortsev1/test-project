@@ -6,6 +6,8 @@ import {
   SESSION_USER_ID_COOKIE_NAMES,
   STARTER_TEMPLATE_NAME,
 } from "@/lib/domain/constants";
+import { localizePath, type Locale } from "@/lib/i18n/config";
+import { getRequestLocale } from "@/lib/i18n/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { TypedSupabaseClient } from "@/lib/supabase/types";
 
@@ -191,6 +193,14 @@ function dedupeNotes(notes: string[]) {
   return Array.from(new Set(notes));
 }
 
+async function getStarterTemplateLocale() {
+  try {
+    return await getRequestLocale();
+  } catch {
+    return "en" as Locale;
+  }
+}
+
 function getErrorMessage(error: unknown) {
   if (error instanceof Error) {
     return error.message;
@@ -372,10 +382,32 @@ export function getBootstrapPath(nextPath = "/dashboard") {
   return `/api/bootstrap?next=${encodeURIComponent(safeNextPath)}`;
 }
 
+export function getLocalizedPathname(nextPath: string, locale?: Locale | null) {
+  if (!locale) {
+    return nextPath;
+  }
+
+  return localizePath(locale, nextPath);
+}
+
+export function getBootstrapPathWithLocale(
+  nextPath = "/dashboard",
+  locale?: Locale | null,
+) {
+  return getBootstrapPath(getLocalizedPathname(nextPath, locale));
+}
+
 export function getAuthChoicePath(nextPath = "/dashboard") {
   const safeNextPath = getSafeNextPath(nextPath, "/dashboard");
 
   return `/?next=${encodeURIComponent(safeNextPath)}`;
+}
+
+export function getAuthChoicePathWithLocale(
+  nextPath = "/dashboard",
+  locale?: Locale | null,
+) {
+  return getAuthChoicePath(getLocalizedPathname(nextPath, locale));
 }
 
 export function getSafeNextPath(nextPath: string | null | undefined, fallback = "/dashboard") {
@@ -616,9 +648,11 @@ export async function ensureProfileForUserId(
     }
   }
 
+  const starterTemplateLocale = await getStarterTemplateLocale();
   const starterTemplateResult = await supabase.rpc(
     "ensure_profile_starter_template",
     {
+      p_locale: starterTemplateLocale,
       p_profile_id: userId,
       p_template_name: STARTER_TEMPLATE_NAME,
     },

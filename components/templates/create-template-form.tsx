@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { LoaderCircle, Plus } from "lucide-react";
 
 import { createTemplate } from "@/app/actions/templates";
+import { useOptionalI18n } from "@/components/i18n/i18n-provider";
 import { Button } from "@/components/ui/button";
 
 type CreateTemplateFormProps = {
@@ -23,6 +24,7 @@ export function CreateTemplateForm({
   submitLabel = "Create template",
 }: CreateTemplateFormProps) {
   const router = useRouter();
+  const i18n = useOptionalI18n();
   const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -46,7 +48,7 @@ export function CreateTemplateForm({
 
           setName("");
           onCreated?.();
-          router.push(`/templates/${result.data.templateId}`);
+          router.push(i18n?.localizePath(`/templates/${result.data.templateId}`) ?? `/templates/${result.data.templateId}`);
           router.refresh();
         });
       }}

@@ -344,6 +344,7 @@ export interface Database {
     Functions: {
       copy_starter_template_for_profile: {
         Args: {
+          p_locale?: string;
           p_profile_id: string;
           p_template_name?: string;
         };
@@ -351,18 +352,38 @@ export interface Database {
       };
       ensure_profile_starter_template: {
         Args: {
+          p_locale?: string;
           p_profile_id: string;
           p_template_name?: string;
         };
         Returns: string;
       };
       get_starter_template_blueprint: {
-        Args: Record<PropertyKey, never>;
+        Args: {
+          p_locale?: string;
+        };
         Returns: {
           catalog_item_id: string;
           category_name: string;
           item_name: string;
           quantity: number | null;
+          sort_order: number;
+          unit: string | null;
+        }[];
+      };
+      get_starter_template_blueprints: {
+        Args: {
+          p_locale?: string;
+        };
+        Returns: {
+          catalog_item_id: string;
+          category_name: string;
+          is_default: boolean;
+          item_name: string;
+          quantity: number | null;
+          template_name: string;
+          template_slug: string;
+          template_sort_order: number;
           sort_order: number;
           unit: string | null;
         }[];

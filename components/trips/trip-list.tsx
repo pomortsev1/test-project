@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/card";
 import {
   formatChecklistProgress,
+  formatLegStatus,
   formatTripDate,
   formatTripMode,
   formatTripStatus,
@@ -19,20 +20,23 @@ import {
 } from "@/components/trips/format";
 import { formatTripLeg } from "@/components/trips/trip-name";
 import type { TripListItem } from "@/components/trips/types";
+import { getServerI18n } from "@/lib/i18n/server";
 
 type TripListProps = {
   trips: TripListItem[];
   activeTripId: string | null;
 };
 
-export function TripList({ trips, activeTripId }: TripListProps) {
+export async function TripList({ trips, activeTripId }: TripListProps) {
+  const { t, localizePath } = await getServerI18n();
+
   if (trips.length === 0) {
     return (
       <Card className="border border-dashed border-border/80 bg-card/90">
         <CardHeader>
-          <CardTitle>No trips yet</CardTitle>
+          <CardTitle>{t("No trips yet")}</CardTitle>
           <CardDescription>
-            Your saved trips will appear here once you create the first route.
+            {t("Your saved trips will appear here once you create the first route.")}
           </CardDescription>
         </CardHeader>
       </Card>
@@ -57,7 +61,7 @@ export function TripList({ trips, activeTripId }: TripListProps) {
                     {trip.id === activeTripId ? (
                       <Badge className="gap-1.5">
                         <Route className="size-3.5" />
-                        Active now
+                        {t("Active now")}
                       </Badge>
                     ) : null}
                   </div>
@@ -66,9 +70,9 @@ export function TripList({ trips, activeTripId }: TripListProps) {
 
                 <div className="flex flex-wrap gap-2">
                   <Badge variant={getTripStatusBadgeVariant(trip.status)}>
-                    {formatTripStatus(trip.status)}
+                    {t(formatTripStatus(trip.status))}
                   </Badge>
-                  <Badge variant="outline">{formatTripMode(trip.mode)}</Badge>
+                  <Badge variant="outline">{t(formatTripMode(trip.mode))}</Badge>
                 </div>
               </div>
             </CardHeader>
@@ -78,23 +82,23 @@ export function TripList({ trips, activeTripId }: TripListProps) {
                 <div className="grid gap-3 sm:grid-cols-3">
                   <div className="rounded-xl border border-border/70 bg-background/80 p-3">
                     <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                      Template
+                      {t("Template")}
                     </p>
                     <p className="mt-2 font-medium">
-                      {trip.templateName ?? "Snapshot only"}
+                      {trip.templateName ?? t("Snapshot only")}
                     </p>
                   </div>
                   <div className="rounded-xl border border-border/70 bg-background/80 p-3">
                     <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                      Journey
+                      {t("Journey")}
                     </p>
                     <p className="mt-2 font-medium">
-                      {trip.completedLegs}/{trip.totalLegs} legs done
+                      {trip.completedLegs}/{trip.totalLegs} {t("legs done")}
                     </p>
                   </div>
                   <div className="rounded-xl border border-border/70 bg-background/80 p-3">
                     <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                      Created
+                      {t("Created")}
                     </p>
                     <p className="mt-2 font-medium">{formatTripDate(trip.createdAt)}</p>
                   </div>
@@ -117,17 +121,17 @@ export function TripList({ trips, activeTripId }: TripListProps) {
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                      Current route
+                      {t("Current route")}
                     </p>
                     <p className="mt-1 font-medium">
                       {currentLeg
                         ? formatTripLeg(currentLeg.fromStopName, currentLeg.toStopName)
-                        : "Route pending"}
+                        : t("Route pending")}
                     </p>
                   </div>
                   {currentLeg ? (
                     <Badge variant={getLegStatusBadgeVariant(currentLeg.status)}>
-                      {currentLeg.status}
+                      {t(formatLegStatus(currentLeg.status))}
                     </Badge>
                   ) : null}
                 </div>
@@ -138,14 +142,14 @@ export function TripList({ trips, activeTripId }: TripListProps) {
                         currentLeg.packedCount,
                         currentLeg.totalCount,
                       )
-                    : "Checklist becomes active once the trip starts."}
+                    : t("Checklist becomes active once the trip starts.")}
                 </p>
 
                 <Link
-                  href={`/trips/${trip.id}`}
+                  href={localizePath(`/trips/${trip.id}`)}
                   className="mt-5 inline-flex items-center gap-2 text-sm font-medium text-primary transition hover:opacity-80"
                 >
-                  Open trip
+                  {t("Open trip")}
                   <ArrowRight className="size-4" />
                 </Link>
               </div>

@@ -19,6 +19,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { LanguageSwitcher } from "@/components/i18n/language-switcher";
+import { getServerI18n } from "@/lib/i18n/server";
 import { getBootstrapPath } from "@/lib/session";
 
 type HomeLandingProps = {
@@ -27,36 +29,60 @@ type HomeLandingProps = {
   nextPath: string;
 };
 
-const onboardingSteps = [
-  {
-    icon: MapPinned,
-    title: "Set the route",
-    description: "We open the trip builder immediately, so you can add where you are going first.",
-  },
-  {
-    icon: Luggage,
-    title: "Get the checklist",
-    description: "Your essentials are ready when the trip is created, and the first leg starts right away.",
-  },
-  {
-    icon: ShieldCheck,
-    title: "Keep it anywhere",
-    description: "Start as a guest now, then connect Google later if you want the same trip on another device.",
-  },
-] as const;
-
-const previewItems = [
-  { name: "Passport", packed: true },
-  { name: "Phone charger", packed: true },
-  { name: "Socks", packed: false },
-  { name: "Toothbrush", packed: false },
-] as const;
-
 export function HomeLanding({
   authErrorValue,
   isSupabaseConfigured,
   nextPath,
 }: HomeLandingProps) {
+  const tPromise = getServerI18n();
+
+  return (
+    <HomeLandingContent
+      authErrorValue={authErrorValue}
+      isSupabaseConfigured={isSupabaseConfigured}
+      nextPath={nextPath}
+      tPromise={tPromise}
+    />
+  );
+}
+
+async function HomeLandingContent({
+  authErrorValue,
+  isSupabaseConfigured,
+  nextPath,
+  tPromise,
+}: HomeLandingProps & { tPromise: ReturnType<typeof getServerI18n> }) {
+  const { t } = await tPromise;
+  const onboardingSteps = [
+    {
+      icon: MapPinned,
+      title: t("Set the route"),
+      description: t(
+        "We open the trip builder immediately, so you can add where you are going first.",
+      ),
+    },
+    {
+      icon: Luggage,
+      title: t("Get the checklist"),
+      description: t(
+        "Your essentials are ready when the trip is created, and the first leg starts right away.",
+      ),
+    },
+    {
+      icon: ShieldCheck,
+      title: t("Keep it anywhere"),
+      description: t(
+        "Start as a guest now, then connect Google later if you want the same trip on another device.",
+      ),
+    },
+  ] as const;
+  const previewItems = [
+    { name: t("Passport"), packed: true },
+    { name: t("Phone charger"), packed: true },
+    { name: t("Socks"), packed: false },
+    { name: t("Toothbrush"), packed: false },
+  ] as const;
+
   return (
     <main className="packing-stage min-h-screen px-4 py-8 text-slate-950 sm:px-6 lg:px-8">
       <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-80 bg-[radial-gradient(circle_at_top,rgba(251,191,36,0.32),transparent_58%)]" />
@@ -64,19 +90,22 @@ export function HomeLanding({
       <div className="pointer-events-none absolute right-[8%] top-32 -z-10 size-64 rounded-full bg-[radial-gradient(circle,rgba(251,191,36,0.18),transparent_72%)] blur-3xl packing-float-delayed" />
 
       <div className="relative mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-6xl flex-col justify-center gap-6">
+        <div className="absolute right-0 top-0 z-20">
+          <LanguageSwitcher />
+        </div>
         <section className="grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_380px] xl:items-stretch">
           <Card className="packing-panel-strong border-0 packing-reveal">
             <CardHeader className="gap-6">
               <div className="flex flex-wrap items-center gap-2 text-slate-50">
                 <Badge className="gap-1.5 border-white/15 bg-white/10 text-white">
                   <Sparkles className="size-3.5" />
-                  Packmap
+                  {t("Packmap")}
                 </Badge>
                 <Badge
                   variant="outline"
                   className="border-white/15 bg-white/10 text-slate-100"
                 >
-                  Trip-first packing
+                  {t("Trip-first packing")}
                 </Badge>
               </div>
 
@@ -84,25 +113,26 @@ export function HomeLanding({
                 <div className="space-y-5">
                   <div className="space-y-4">
                     <h1 className="max-w-4xl font-heading text-5xl leading-none text-balance sm:text-6xl">
-                      Start a trip.
+                      {t("Start a trip.")}
                       <br />
-                      Pack only what this leg needs.
+                      {t("Pack only what this leg needs.")}
                     </h1>
                     <p className="max-w-2xl text-base leading-7 text-slate-200 sm:text-lg">
-                      Jump straight into the trip builder, set your route, and get a live
-                      checklist instead of a lecture about internal setup.
+                      {t(
+                        "Jump straight into the trip builder, set your route, and get a live checklist instead of a lecture about internal setup.",
+                      )}
                     </p>
                   </div>
 
                   <div className="flex flex-wrap gap-2 text-sm text-slate-100">
                     <div className="rounded-full border border-white/15 bg-white/10 px-3 py-2">
-                      No account required
+                      {t("No account required")}
                     </div>
                     <div className="rounded-full border border-white/15 bg-white/10 px-3 py-2">
-                      Opens the trip builder
+                      {t("Opens the trip builder")}
                     </div>
                     <div className="rounded-full border border-white/15 bg-white/10 px-3 py-2">
-                      Google stays optional
+                      {t("Google stays optional")}
                     </div>
                   </div>
                 </div>
@@ -112,20 +142,20 @@ export function HomeLanding({
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <p className="text-xs font-medium uppercase tracking-[0.18em] text-slate-500">
-                          Preview
+                          {t("Preview")}
                         </p>
-                        <p className="mt-2 text-xl font-semibold">Lisbon weekend</p>
+                        <p className="mt-2 text-xl font-semibold">{t("Lisbon weekend")}</p>
                         <p className="mt-1 text-sm text-slate-500">
-                          Current leg: Home to Lisbon
+                          {t("Current leg: Home to Lisbon")}
                         </p>
                       </div>
-                      <Badge className="bg-emerald-600 text-white">Live</Badge>
+                      <Badge className="bg-emerald-600 text-white">{t("Live")}</Badge>
                     </div>
 
                     <div className="mt-4 rounded-2xl border border-slate-200/80 bg-slate-50/80 p-3">
                       <div className="flex items-center gap-2 text-sm font-medium text-slate-700">
                         <Route className="size-4 text-sky-700" />
-                        Route
+                        {t("Route")}
                       </div>
                       <div className="mt-3 flex items-center gap-2 text-sm text-slate-600">
                         <span className="rounded-full bg-slate-900 px-2.5 py-1 text-xs text-white">
@@ -144,7 +174,7 @@ export function HomeLanding({
 
                     <div className="mt-4 rounded-2xl border border-slate-200/80 bg-white p-3">
                       <div className="flex items-center justify-between gap-3">
-                        <p className="text-sm font-medium text-slate-700">Checklist</p>
+                        <p className="text-sm font-medium text-slate-700">{t("Checklist")}</p>
                         <p className="text-sm text-slate-500">2 of 4 packed</p>
                       </div>
                       <div className="mt-3 space-y-2">
@@ -176,13 +206,14 @@ export function HomeLanding({
               <CardHeader className="gap-4">
                 <Badge variant="outline" className="w-fit gap-1.5 border-sky-200 bg-sky-50/80">
                   <ArrowRight className="size-3.5" />
-                  Start in under a minute
+                  {t("Start in under a minute")}
                 </Badge>
                 <div className="space-y-2">
-                  <CardTitle className="text-3xl">Open the trip builder now</CardTitle>
+                  <CardTitle className="text-3xl">{t("Open the trip builder now")}</CardTitle>
                   <CardDescription className="text-base leading-7 text-slate-600">
-                    One click opens the route planner immediately. No account wall, no
-                    template jargon first.
+                    {t(
+                      "One click opens the route planner immediately. No account wall, no template jargon first.",
+                    )}
                   </CardDescription>
                 </div>
               </CardHeader>
@@ -199,33 +230,37 @@ export function HomeLanding({
                   className="h-[3.25rem] w-full rounded-2xl bg-slate-950 text-base text-white shadow-[0_18px_34px_rgba(15,23,42,0.18)] hover:bg-slate-800"
                   render={<a href={getBootstrapPath(nextPath)} />}
                 >
-                  Start a trip now
+                  {t("Start a trip now")}
                   <ArrowRight className="size-4" />
                 </Button>
 
                 <p className="text-sm leading-6 text-slate-600">
-                  You will land in the trip builder right away and can connect Google later
-                  if you want the same trip on another device.
+                  {t(
+                    "You will land in the trip builder right away and can connect Google later if you want the same trip on another device.",
+                  )}
                 </p>
 
                 <div className="rounded-2xl border border-slate-200/80 bg-white/80 p-4">
-                  <p className="text-sm font-medium text-slate-900">Prefer to keep it synced?</p>
+                  <p className="text-sm font-medium text-slate-900">
+                    {t("Prefer to keep it synced?")}
+                  </p>
                   <p className="mt-1 text-sm leading-6 text-slate-600">
-                    Start with Google and we will bring you to the same place.
+                    {t("Start with Google and we will bring you to the same place.")}
                   </p>
                   <GoogleSignInButton
                     nextPath={nextPath}
                     variant="outline"
                     className="mt-3 h-12 w-full rounded-2xl border-slate-300 bg-white/88"
                     disabled={!isSupabaseConfigured}
-                    label="Start with Google"
+                    label={t("Start with Google")}
                   />
                 </div>
 
                 {!isSupabaseConfigured ? (
                   <div className="rounded-2xl border border-amber-300/60 bg-amber-50/[0.85] px-4 py-3 text-sm leading-6 text-amber-950">
-                    Google sign-in is not ready in this environment yet, but guest mode still
-                    opens the full trip flow.
+                    {t(
+                      "Google sign-in is not ready in this environment yet, but guest mode still opens the full trip flow.",
+                    )}
                   </div>
                 ) : null}
               </CardContent>
@@ -255,7 +290,7 @@ export function HomeLanding({
                     </div>
                     <div>
                       <p className="text-xs uppercase tracking-[0.18em] text-slate-500">
-                        Step {index + 1}
+                        {t("Step {step}", { step: index + 1 })}
                       </p>
                       <CardTitle className="mt-1 text-xl">{step.title}</CardTitle>
                     </div>

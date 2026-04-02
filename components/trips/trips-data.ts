@@ -18,6 +18,14 @@ import {
   getCurrentUserId as getCurrentSessionUserId,
   getSessionCookieOptions,
 } from "@/lib/session";
+import { DEFAULT_LOCALE } from "@/lib/i18n/config";
+import {
+  localizeMeasurementUnit,
+  localizeStarterItemName,
+  localizeStarterTemplateName,
+  localizeSystemCategoryName,
+} from "@/lib/i18n/starter-template-localization";
+import { getRequestLocale } from "@/lib/i18n/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type {
   ArchiveTripInput,
@@ -196,6 +204,14 @@ async function getSupabaseClient() {
   return createSupabaseServerClient();
 }
 
+async function getTripsLocale() {
+  try {
+    return await getRequestLocale();
+  } catch {
+    return DEFAULT_LOCALE;
+  }
+}
+
 async function requireSupabaseClient() {
   const client = await getSupabaseClient();
 
@@ -266,6 +282,7 @@ async function requireOwnedTrip(
 }
 
 async function loadTemplatesForUser(client: AppSupabaseClient, userId: string) {
+  const locale = await getTripsLocale();
   const { data: templateRows, error: templateError } = await client
     .from("packing_templates")
     .select("id, name, is_default")
@@ -302,7 +319,7 @@ async function loadTemplatesForUser(client: AppSupabaseClient, userId: string) {
 
   return (templateRows ?? []).map((template) => ({
     id: template.id,
-    name: template.name,
+    name: localizeStarterTemplateName(template.name, locale),
     isDefault: template.is_default,
     itemCount: itemCounts.get(template.id) ?? 0,
   }));
@@ -365,6 +382,7 @@ async function loadChecksForLegs(client: AppSupabaseClient, legIds: string[]) {
 }
 
 async function loadTripItems(client: AppSupabaseClient, tripId: string) {
+  const locale = await getTripsLocale();
   const { data, error } = await client
     .from("trip_items")
     .select("id, item_name, category_name, quantity, unit, sort_order")
@@ -378,7 +396,12 @@ async function loadTripItems(client: AppSupabaseClient, tripId: string) {
     throw error;
   }
 
-  return data ?? [];
+  return (data ?? []).map((item) => ({
+    ...item,
+    item_name: localizeStarterItemName(item.item_name, locale),
+    category_name: localizeSystemCategoryName(item.category_name, locale),
+    unit: item.unit ? localizeMeasurementUnit(item.unit, locale) : null,
+  }));
 }
 
 function groupByTripId<T extends { trip_id: string }>(rows: T[]) {
@@ -773,6 +796,7 @@ export async function getActiveTripForCurrentUser() {
 export async function getTripDetails(tripId: string): Promise<TripDetails | null> {
   const client = await getSupabaseClient();
   const userId = await getCurrentUserIdFromCookie();
+  const locale = await getTripsLocale();
 
   if (!client || !userId) {
     return null;
@@ -838,7 +862,9 @@ export async function getTripDetails(tripId: string): Promise<TripDetails | null
     mode: tripRow.mode,
     status: tripRow.status,
     templateId: tripRow.template_id,
-    templateName: templateRow.data?.name ?? null,
+    templateName: templateRow.data?.name
+      ? localizeStarterTemplateName(templateRow.data.name, locale)
+      : null,
     createdAt: tripRow.created_at,
     updatedAt: tripRow.updated_at,
     currentLegIndex: tripRow.current_leg_index,

@@ -11,16 +11,18 @@ import {
 } from "@/components/ui/card";
 import type { PackingTemplate } from "@/lib/domain/types";
 import { formatMeasurementLabel } from "@/lib/domain/measurements";
+import { getServerI18n } from "@/lib/i18n/server";
 
 function getCategorySummary(template: PackingTemplate) {
   return [...new Set(template.items.map((item) => item.categoryName))];
 }
 
-export function TemplatesOverview({
+export async function TemplatesOverview({
   templates,
 }: {
   templates: PackingTemplate[];
 }) {
+  const { localizePath } = await getServerI18n();
   const defaultTemplate =
     templates.find((template) => template.isDefault) ?? templates[0] ?? null;
   const additionalTemplates = templates.filter(
@@ -100,7 +102,7 @@ export function TemplatesOverview({
             )}
 
             <Link
-              href={`/templates/${defaultTemplate.id}`}
+              href={localizePath(`/templates/${defaultTemplate.id}`)}
               className="inline-flex items-center gap-2 text-sm font-medium text-foreground transition hover:text-foreground/80"
             >
               Open the default template

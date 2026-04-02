@@ -17,6 +17,14 @@ import type {
   TripLeg,
   TripStop,
 } from "@/lib/domain/types";
+import { DEFAULT_LOCALE, type Locale } from "@/lib/i18n/config";
+import { getRequestLocale } from "@/lib/i18n/server";
+import {
+  localizeMeasurementUnit,
+  localizeStarterItemName,
+  localizeStarterTemplateName,
+  localizeSystemCategoryName,
+} from "@/lib/i18n/starter-template-localization";
 import { ensureProfileForCurrentUser } from "@/lib/session";
 import { getSupabaseEnv } from "@/lib/supabase/env";
 
@@ -24,6 +32,56 @@ type DashboardPackingItemSeed = {
   categoryName: string;
   itemName: string;
 } & QuantityValue;
+
+async function getDashboardLocale() {
+  try {
+    return await getRequestLocale();
+  } catch {
+    return DEFAULT_LOCALE;
+  }
+}
+
+function localizePackingItem(item: PackingItemSnapshot, locale: Locale): PackingItemSnapshot {
+  if (item.quantity === null || item.unit === null) {
+    return {
+      ...item,
+      itemName: localizeStarterItemName(item.itemName, locale),
+      categoryName: localizeSystemCategoryName(item.categoryName, locale),
+      quantity: null,
+      unit: null,
+    };
+  }
+
+  return {
+    ...item,
+    itemName: localizeStarterItemName(item.itemName, locale),
+    categoryName: localizeSystemCategoryName(item.categoryName, locale),
+    quantity: item.quantity,
+    unit: localizeMeasurementUnit(item.unit, locale),
+  };
+}
+
+function localizeTemplate(template: PackingTemplate, locale: Locale): PackingTemplate {
+  return {
+    ...template,
+    name: localizeStarterTemplateName(template.name, locale),
+    items: template.items.map((item) => localizePackingItem(item, locale)),
+  };
+}
+
+function localizeTrip(trip: Trip, locale: Locale): Trip {
+  return {
+    ...trip,
+    templateName: localizeStarterTemplateName(trip.templateName, locale),
+    legs: trip.legs.map((leg) => ({
+      ...leg,
+      checklistItems: leg.checklistItems.map((item) => ({
+        ...localizePackingItem(item, locale),
+        isPacked: item.isPacked,
+      })),
+    })),
+  };
+}
 
 function createTemplateItems(
   prefix: string,
@@ -716,6 +774,7 @@ function mapTripDetails(details: TripDetails): Trip {
 }
 
 export async function getDashboardData(): Promise<DashboardData> {
+  const locale = await getDashboardLocale();
   const profile = await ensureProfileForCurrentUser();
 
   try {
@@ -724,15 +783,19 @@ export async function getDashboardData(): Promise<DashboardData> {
     if (tripsPageData.isSupabaseConfigured) {
       const templates = mapTemplateOptions(tripsPageData.templates);
       const trips = tripsPageData.trips.map(mapTripListItem);
+      const localizedTemplates = templates.map((template) =>
+        localizeTemplate(template, locale),
+      );
+      const localizedTrips = trips.map((trip) => localizeTrip(trip, locale));
       const activeTripDetails = tripsPageData.activeTripId
         ? await getTripDetails(tripsPageData.activeTripId)
         : null;
 
       return {
         profile,
-        templates,
-        trips,
-        activeTrip: activeTripDetails ? mapTripDetails(activeTripDetails) : null,
+        templates: localizedTemplates,
+        trips: localizedTrips,
+        activeTrip: activeTripDetails ? localizeTrip(mapTripDetails(activeTripDetails), locale) : null,
         isSupabaseConfigured: true,
       };
     }
@@ -742,12 +805,16 @@ export async function getDashboardData(): Promise<DashboardData> {
 
   const templates = buildTemplates();
   const trips = buildTrips(templates);
+  const localizedTemplates = templates.map((template) =>
+    localizeTemplate(template, locale),
+  );
+  const localizedTrips = trips.map((trip) => localizeTrip(trip, locale));
 
   return {
     profile,
-    templates,
-    trips,
-    activeTrip: trips.find((trip) => trip.status === "active") ?? null,
+    templates: localizedTemplates,
+    trips: localizedTrips,
+    activeTrip: localizedTrips.find((trip) => trip.status === "active") ?? null,
     isSupabaseConfigured: getSupabaseEnv().isConfigured,
   };
 }

@@ -122,7 +122,11 @@ function buildAtAGlanceStats(data: DashboardData, defaultTemplate: PackingTempla
   ];
 }
 
-function renderFocusCard(data: DashboardData, defaultTemplate: PackingTemplate | null) {
+function renderFocusCard(
+  data: DashboardData,
+  defaultTemplate: PackingTemplate | null,
+  localizePath: (pathname: string) => string,
+) {
   const activeTrip = data.activeTrip;
   const activeLeg = getActiveLeg(activeTrip);
   const { packedCount, totalCount, percent } = getChecklistProgress(activeTrip);
@@ -173,7 +177,7 @@ function renderFocusCard(data: DashboardData, defaultTemplate: PackingTemplate |
                 Next items
               </h3>
               <Link
-                href={`/trips/${activeTrip.id}`}
+                href={localizePath(`/trips/${activeTrip.id}`)}
                 className="text-sm font-medium text-foreground transition hover:text-foreground/80"
               >
                 Open full checklist
@@ -264,7 +268,7 @@ function renderFocusCard(data: DashboardData, defaultTemplate: PackingTemplate |
             <Button
               nativeButton={false}
               className="h-11 rounded-2xl"
-              render={<Link href="/trips" />}
+              render={<Link href={localizePath("/trips")} />}
             >
               Plan a trip
               <ArrowRight className="size-4" />
@@ -273,7 +277,7 @@ function renderFocusCard(data: DashboardData, defaultTemplate: PackingTemplate |
               nativeButton={false}
               variant="outline"
               className="h-11 rounded-2xl"
-              render={<Link href={`/templates/${defaultTemplate.id}`} />}
+              render={<Link href={localizePath(`/templates/${defaultTemplate.id}`)} />}
             >
               Open packing list
             </Button>
@@ -307,7 +311,7 @@ function renderFocusCard(data: DashboardData, defaultTemplate: PackingTemplate |
         <Button
           nativeButton={false}
           className="h-11 rounded-2xl"
-          render={<Link href="/templates" />}
+          render={<Link href={localizePath("/templates")} />}
         >
           Create packing list
           <ArrowRight className="size-4" />
@@ -317,7 +321,10 @@ function renderFocusCard(data: DashboardData, defaultTemplate: PackingTemplate |
   );
 }
 
-function renderRecentTripsCard(data: DashboardData) {
+function renderRecentTripsCard(
+  data: DashboardData,
+  localizePath: (pathname: string) => string,
+) {
   const recentTrips = data.trips.filter((trip) => trip.id !== data.activeTrip?.id).slice(0, 4);
 
   return (
@@ -333,7 +340,7 @@ function renderRecentTripsCard(data: DashboardData) {
           recentTrips.map((trip) => (
             <Link
               key={trip.id}
-              href={`/trips/${trip.id}`}
+              href={localizePath(`/trips/${trip.id}`)}
               className="block rounded-2xl border border-border/70 bg-background/80 px-4 py-3 transition hover:border-slate-300 hover:bg-background"
             >
               <div className="flex items-start justify-between gap-3">
@@ -356,7 +363,7 @@ function renderRecentTripsCard(data: DashboardData) {
         )}
 
         <Link
-          href="/trips"
+          href={localizePath("/trips")}
           className="inline-flex items-center gap-2 text-sm font-medium text-foreground transition hover:text-foreground/80"
         >
           Open all trips
@@ -367,7 +374,11 @@ function renderRecentTripsCard(data: DashboardData) {
   );
 }
 
-function renderPackingListsCard(data: DashboardData, defaultTemplate: PackingTemplate | null) {
+function renderPackingListsCard(
+  data: DashboardData,
+  defaultTemplate: PackingTemplate | null,
+  localizePath: (pathname: string) => string,
+) {
   const extraCount = Math.max(data.templates.length - (defaultTemplate ? 1 : 0), 0);
 
   return (
@@ -408,7 +419,7 @@ function renderPackingListsCard(data: DashboardData, defaultTemplate: PackingTem
             nativeButton={false}
             variant="outline"
             className="h-11 rounded-2xl"
-            render={<Link href="/templates" />}
+            render={<Link href={localizePath("/templates")} />}
           >
             Open Templates
           </Button>
@@ -416,7 +427,7 @@ function renderPackingListsCard(data: DashboardData, defaultTemplate: PackingTem
             <Button
               nativeButton={false}
               className="h-11 rounded-2xl"
-              render={<Link href={`/templates/${defaultTemplate.id}`} />}
+              render={<Link href={localizePath(`/templates/${defaultTemplate.id}`)} />}
             >
               Open main list
               <ArrowRight className="size-4" />
@@ -428,7 +439,16 @@ function renderPackingListsCard(data: DashboardData, defaultTemplate: PackingTem
   );
 }
 
-export function DashboardShell({ data }: { data: DashboardData }) {
+export function DashboardShell({
+  data,
+  localizePath = (pathname: string) => pathname,
+  translate = (value: string) => value,
+}: {
+  data: DashboardData;
+  localizePath?: (pathname: string) => string;
+  translate?: (value: string) => string;
+}) {
+  const t = translate;
   const travelerName = getFirstName(data.profile.displayName);
   const defaultTemplate =
     data.templates.find((template) => template.isDefault) ?? data.templates[0] ?? null;
@@ -441,7 +461,7 @@ export function DashboardShell({ data }: { data: DashboardData }) {
         <CardHeader className="gap-6">
           <div className="flex flex-wrap items-center gap-2 text-slate-50">
             <LayoutDashboard className="size-4" />
-            <span className="text-sm font-medium">Dashboard</span>
+            <span className="text-sm font-medium">{t("Dashboard")}</span>
           </div>
 
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-end">
@@ -460,9 +480,9 @@ export function DashboardShell({ data }: { data: DashboardData }) {
                 <Button
                   nativeButton={false}
                   className="h-11 rounded-2xl bg-white text-slate-950 shadow-sm hover:bg-slate-100"
-                  render={<Link href={hero.primaryHref} />}
+                  render={<Link href={localizePath(hero.primaryHref)} />}
                 >
-                  {hero.primaryLabel}
+                  {t(hero.primaryLabel)}
                   <ArrowRight className="size-4" />
                 </Button>
 
@@ -470,15 +490,17 @@ export function DashboardShell({ data }: { data: DashboardData }) {
                   nativeButton={false}
                   variant="outline"
                   className="h-11 rounded-2xl border-white/20 bg-white/10 text-white hover:bg-white/20 hover:text-white"
-                  render={<Link href={hero.secondaryHref} />}
+                  render={<Link href={localizePath(hero.secondaryHref)} />}
                 >
-                  {hero.secondaryLabel}
+                  {t(hero.secondaryLabel)}
                 </Button>
               </div>
             </div>
 
             <div className="rounded-[1.7rem] border border-white/14 bg-white/10 p-4 shadow-[0_20px_60px_rgba(15,23,42,0.12)] backdrop-blur">
-              <p className="text-xs uppercase tracking-[0.18em] text-slate-300">At a glance</p>
+              <p className="text-xs uppercase tracking-[0.18em] text-slate-300">
+                {t("At a glance")}
+              </p>
               <div className="mt-4 space-y-3">
                 {atAGlanceStats.map((stat) => (
                   <div
@@ -486,10 +508,10 @@ export function DashboardShell({ data }: { data: DashboardData }) {
                     className="rounded-2xl border border-white/15 bg-white/10 px-4 py-3"
                   >
                     <p className="text-xs uppercase tracking-[0.18em] text-slate-300">
-                      {stat.label}
+                      {t(stat.label)}
                     </p>
                     <p className="mt-2 font-medium text-slate-50">{stat.value}</p>
-                    <p className="mt-1 text-sm text-slate-300">{stat.helper}</p>
+                    <p className="mt-1 text-sm text-slate-300">{t(stat.helper)}</p>
                   </div>
                 ))}
               </div>
@@ -499,19 +521,20 @@ export function DashboardShell({ data }: { data: DashboardData }) {
       </Card>
 
       <section className="grid gap-6 xl:grid-cols-[minmax(0,1.12fr)_360px]">
-        <div>{renderFocusCard(data, defaultTemplate)}</div>
+        <div>{renderFocusCard(data, defaultTemplate, localizePath)}</div>
 
         <div className="space-y-6">
-          {renderRecentTripsCard(data)}
-          {renderPackingListsCard(data, defaultTemplate)}
+          {renderRecentTripsCard(data, localizePath)}
+          {renderPackingListsCard(data, defaultTemplate, localizePath)}
         </div>
       </section>
 
       {!data.isSupabaseConfigured ? (
         <Card className="packing-panel border-0">
           <CardContent className="px-4 py-4 text-sm leading-6 text-slate-600">
-            Google sign-in is not configured here yet. Guest mode still supports the full
-            packing flow.
+            {t(
+              "Google sign-in is not configured here yet. Guest mode still supports the full packing flow.",
+            )}
           </CardContent>
         </Card>
       ) : null}

@@ -8,6 +8,14 @@ import {
   ensureProfileForUserId,
   getCurrentUserId as getCurrentSessionUserId,
 } from "@/lib/session";
+import { DEFAULT_LOCALE, type Locale } from "@/lib/i18n/config";
+import {
+  localizeMeasurementUnit,
+  localizeStarterItemName,
+  localizeStarterTemplateName,
+  localizeSystemCategoryName,
+} from "@/lib/i18n/starter-template-localization";
+import { getRequestLocale } from "@/lib/i18n/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 const TEMPLATES_PATH = "/templates";
@@ -183,6 +191,14 @@ type CategoryResolution = {
 };
 
 const OPTIONAL_TEMPLATE_MEASUREMENTS_ENABLED = true;
+
+async function getTemplatesLocale() {
+  try {
+    return await getRequestLocale();
+  } catch {
+    return DEFAULT_LOCALE;
+  }
+}
 
 function asRecord(value: unknown): JsonRecord | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
@@ -394,10 +410,11 @@ function toTemplateSummary(
   template: TemplateRecord,
   itemCounts: Map<string, number>,
   effectiveDefaultTemplateId: string | null = null,
+  locale: Locale = DEFAULT_LOCALE,
 ): TemplateSummary {
   return {
     id: template.id,
-    name: template.name,
+    name: localizeStarterTemplateName(template.name, locale),
     isDefault:
       effectiveDefaultTemplateId !== null
         ? template.id === effectiveDefaultTemplateId
@@ -408,15 +425,15 @@ function toTemplateSummary(
   };
 }
 
-function toTemplateItem(record: TemplateItemRecord): TemplateItem {
+function toTemplateItem(record: TemplateItemRecord, locale: Locale = DEFAULT_LOCALE): TemplateItem {
   return {
     id: record.id,
     catalogItemId: record.catalogItemId,
-    itemName: record.itemName,
+    itemName: localizeStarterItemName(record.itemName, locale),
     itemNormalizedName: record.itemNormalizedName,
-    categoryName: record.categoryName,
+    categoryName: localizeSystemCategoryName(record.categoryName, locale),
     quantity: record.quantity,
-    unit: record.unit,
+    unit: record.unit ? localizeMeasurementUnit(record.unit, locale) : null,
     sortOrder: record.sortOrder,
   };
 }
@@ -487,6 +504,7 @@ async function getCategoryOptionsFromDb(
   supabase: SupabaseClient,
   userId: string,
 ): Promise<CategoryOption[]> {
+  const locale = await getTemplatesLocale();
   const [systemResult, userResult] = await Promise.all([
     supabase
       .from("categories")
@@ -513,7 +531,13 @@ async function getCategoryOptionsFromDb(
     [...(systemResult.data ?? []), ...(userResult.data ?? [])]
       .map(mapCategoryOption)
       .filter((value): value is CategoryOption => value !== null),
-  );
+  ).map((category) => ({
+    ...category,
+    name:
+      category.scope === "system"
+        ? localizeSystemCategoryName(category.name, locale)
+        : category.name,
+  }));
 }
 
 async function getCatalogContextFromDb(
@@ -523,6 +547,7 @@ async function getCatalogContextFromDb(
   categories: CategoryOption[];
   suggestions: CatalogSuggestion[];
 }> {
+  const locale = await getTemplatesLocale();
   const [categories, systemItemsResult, userItemsResult] = await Promise.all([
     getCategoryOptionsFromDb(supabase, userId),
     supabase
@@ -559,11 +584,20 @@ async function getCatalogContextFromDb(
       return [
         {
           id: record.id,
-          name: record.name,
+          name:
+            record.scope === "system"
+              ? localizeStarterItemName(record.name, locale)
+              : record.name,
           normalizedName: record.normalizedName,
-          defaultUnit: record.defaultUnit,
+          defaultUnit:
+            record.scope === "system" && record.defaultUnit
+              ? localizeMeasurementUnit(record.defaultUnit, locale)
+              : record.defaultUnit,
           categoryId: record.categoryId,
-          categoryName: category.name,
+          categoryName:
+            category.scope === "system"
+              ? localizeSystemCategoryName(category.name, locale)
+              : category.name,
           scope: record.scope,
         } satisfies CatalogSuggestion,
       ];
@@ -587,6 +621,7 @@ async function loadOwnedTemplate(
   userId: string,
   templateId: string,
 ) {
+  const locale = await getTemplatesLocale();
   const result = await supabase
     .from("packing_templates")
     .select("id, name, is_default, created_at, updated_at")
@@ -598,13 +633,21 @@ async function loadOwnedTemplate(
     throw new Error(result.error.message);
   }
 
-  return mapTemplateRecord(result.data);
+  const template = mapTemplateRecord(result.data);
+
+  return template
+    ? {
+        ...template,
+        name: localizeStarterTemplateName(template.name, locale),
+      }
+    : null;
 }
 
 async function loadTemplatesForUser(
   supabase: SupabaseClient,
   userId: string,
 ): Promise<TemplateRecord[]> {
+  const locale = await getTemplatesLocale();
   const templatesResult = await supabase
     .from("packing_templates")
     .select("id, name, is_default, created_at, updated_at")
@@ -618,7 +661,11 @@ async function loadTemplatesForUser(
 
   return (templatesResult.data ?? [])
     .map(mapTemplateRecord)
-    .filter((value): value is TemplateRecord => value !== null);
+    .filter((value): value is TemplateRecord => value !== null)
+    .map((template) => ({
+      ...template,
+      name: localizeStarterTemplateName(template.name, locale),
+    }));
 }
 
 async function loadAccessibleCategoryById(
@@ -1007,6 +1054,7 @@ export async function getTemplateDetails(
   }
 
   try {
+    const locale = await getTemplatesLocale();
     const templates = await loadTemplatesForUser(supabase, userId);
     const effectiveDefaultTemplateId = getEffectiveDefaultTemplateId(templates);
     const template =
@@ -1035,7 +1083,7 @@ export async function getTemplateDetails(
     const items = (itemsResult.data ?? [])
       .map(mapTemplateItemRecord)
       .filter((value): value is TemplateItemRecord => value !== null)
-      .map(toTemplateItem);
+      .map((record) => toTemplateItem(record, locale));
 
     return {
       detail: {
@@ -1043,6 +1091,7 @@ export async function getTemplateDetails(
           template,
           new Map([[template.id, items.length]]),
           effectiveDefaultTemplateId,
+          locale,
         ),
         items,
       },

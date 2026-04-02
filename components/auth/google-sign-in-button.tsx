@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { LogIn } from "lucide-react";
 import type { VariantProps } from "class-variance-authority";
 
+import { useOptionalI18n } from "@/components/i18n/i18n-provider";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
   LEGACY_PACKING_APP_AUTH_NEXT_COOKIE,
@@ -23,14 +24,16 @@ type GoogleSignInButtonProps = {
 export function GoogleSignInButton({
   className,
   disabled = false,
-  label = "Continue with Google",
+  label,
   nextPath,
   size = "default",
   variant = "default",
 }: GoogleSignInButtonProps) {
+  const i18n = useOptionalI18n();
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const isDisabled = disabled || isPending;
+  const resolvedLabel = label ?? i18n?.t("Continue with Google") ?? "Continue with Google";
 
   return (
     <div className="space-y-2">
@@ -48,7 +51,10 @@ export function GoogleSignInButton({
 
             if (!supabase) {
               setError(
-                "Supabase is not configured yet, so Google sign-in is unavailable in this environment."
+                i18n?.t(
+                  "Supabase is not configured yet, so Google sign-in is unavailable in this environment.",
+                ) ??
+                  "Supabase is not configured yet, so Google sign-in is unavailable in this environment."
               );
               return;
             }
@@ -86,7 +92,10 @@ export function GoogleSignInButton({
 
             if (data.url == null) {
               console.error("[google-auth] signInWithOAuth returned no url");
-              setError("Google sign-in could not start because no redirect URL was returned.");
+              setError(
+                i18n?.t("Google sign-in could not start because no redirect URL was returned.") ??
+                  "Google sign-in could not start because no redirect URL was returned.",
+              );
               return;
             }
 
@@ -97,7 +106,7 @@ export function GoogleSignInButton({
         }}
       >
         <LogIn className="size-4" />
-        {label}
+        {resolvedLabel}
       </Button>
 
       {error ? <p className="text-sm text-destructive">{error}</p> : null}

@@ -5,6 +5,7 @@ import { MapPinned, Plus, Route, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { createTrip } from "@/app/actions/trips";
+import { useOptionalI18n } from "@/components/i18n/i18n-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -35,6 +36,8 @@ function buildVisibleStops(mode: TripMode, stops: string[]) {
 
 export function TripPlanner({ templates }: TripPlannerProps) {
   const router = useRouter();
+  const i18n = useOptionalI18n();
+  const t = (value: string) => i18n?.t(value) ?? value;
   const defaultTemplate =
     templates.find((template) => template.isDefault)?.id ?? templates[0]?.id ?? "";
   const [name, setName] = useState("");
@@ -56,16 +59,17 @@ export function TripPlanner({ templates }: TripPlannerProps) {
           <div className="space-y-1">
             <CardTitle className="flex items-center gap-2 text-xl">
               <MapPinned className="size-5" />
-              Start your trip
+              {t("Start your trip")}
             </CardTitle>
             <CardDescription>
-              Add your stops and we&apos;ll bring in your usual packing list
-              automatically. If you have extra saved lists, you can switch them here.
+              {t(
+                "Add your stops and we'll bring in your usual packing list automatically. If you have extra saved lists, you can switch them here.",
+              )}
             </CardDescription>
           </div>
           <Badge variant="outline" className="gap-1.5">
             <Route className="size-3.5" />
-            Main list selected first
+            {t("Main list selected first")}
           </Badge>
         </div>
       </CardHeader>
@@ -73,22 +77,22 @@ export function TripPlanner({ templates }: TripPlannerProps) {
       <CardContent className="space-y-5">
         <div className="grid gap-4 md:grid-cols-2">
           <label className="space-y-2">
-            <span className="text-sm font-medium">Trip name (optional)</span>
+            <span className="text-sm font-medium">{t("Trip name (optional)")}</span>
             <input
               value={name}
               onChange={(event) => setName(event.target.value)}
-              placeholder={generatedName || "Spring city break"}
+              placeholder={generatedName || t("Spring city break")}
               className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none transition focus:border-ring focus:ring-3 focus:ring-ring/20"
             />
             <p className="text-xs text-muted-foreground">
               {generatedName
-                ? `Leave blank to use: ${generatedName}`
-                : "Leave blank to generate the trip name from your destinations."}
+                ? `${t("Leave blank to use:")} ${generatedName}`
+                : t("Leave blank to generate the trip name from your destinations.")}
             </p>
           </label>
 
           <label className="space-y-2">
-            <span className="text-sm font-medium">Packing list</span>
+            <span className="text-sm font-medium">{t("Packing list")}</span>
             <select
               value={templateId}
               onChange={(event) => setTemplateId(event.target.value)}
@@ -96,26 +100,26 @@ export function TripPlanner({ templates }: TripPlannerProps) {
               className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none transition focus:border-ring focus:ring-3 focus:ring-ring/20 disabled:opacity-60"
             >
               {templates.length === 0 ? (
-                <option value="">No templates available yet</option>
+                <option value="">{t("No templates available yet")}</option>
               ) : null}
               {templates.map((template) => (
                 <option key={template.id} value={template.id}>
                   {template.name}
-                  {template.isDefault ? " • default" : ""}
-                  {` • ${template.itemCount} items`}
+                  {template.isDefault ? ` • ${t("default")}` : ""}
+                  {` • ${template.itemCount} ${t("items")}`}
                 </option>
               ))}
             </select>
             <p className="text-xs text-muted-foreground">
               {templates.some((template) => template.isDefault)
-                ? "Your main saved list is selected first."
-                : "Choose any saved list for this trip."}
+                ? t("Your main saved list is selected first.")
+                : t("Choose any saved list for this trip.")}
             </p>
           </label>
         </div>
 
         <div className="space-y-3">
-          <span className="text-sm font-medium">Route mode</span>
+          <span className="text-sm font-medium">{t("Route mode")}</span>
           <div className="grid gap-3 sm:grid-cols-2">
             {(["simple", "multi_stop"] as const).map((nextMode) => {
               const isSelected = mode === nextMode;
@@ -144,13 +148,13 @@ export function TripPlanner({ templates }: TripPlannerProps) {
                   }`}
                 >
                   <div className="flex items-center justify-between gap-3">
-                    <span className="font-medium">{formatTripMode(nextMode)}</span>
-                    {isSelected ? <Badge>Selected</Badge> : null}
+                    <span className="font-medium">{t(formatTripMode(nextMode))}</span>
+                    {isSelected ? <Badge>{t("Selected")}</Badge> : null}
                   </div>
                   <p className="mt-2 text-sm text-muted-foreground">
                     {nextMode === "simple"
-                      ? "Home → Destination → Home"
-                      : "Home → Stop 1 → Stop 2 → Home"}
+                      ? t("Home → Destination → Home")
+                      : t("Home → Stop 1 → Stop 2 → Home")}
                   </p>
                 </button>
               );
@@ -161,7 +165,7 @@ export function TripPlanner({ templates }: TripPlannerProps) {
         <div className="space-y-3">
           <div className="flex items-center justify-between gap-3">
             <span className="text-sm font-medium">
-              {mode === "simple" ? "Destination" : "Stops"}
+              {mode === "simple" ? t("Destination") : t("Stops")}
             </span>
             {mode === "multi_stop" ? (
               <Button
@@ -174,7 +178,7 @@ export function TripPlanner({ templates }: TripPlannerProps) {
                 }}
               >
                 <Plus className="size-4" />
-                Add stop
+                {t("Add stop")}
               </Button>
             ) : null}
           </div>
@@ -190,7 +194,9 @@ export function TripPlanner({ templates }: TripPlannerProps) {
                     setStops(nextStops);
                     setError(null);
                   }}
-                  placeholder={mode === "simple" ? "Destination" : `Stop ${index + 1}`}
+                  placeholder={
+                    mode === "simple" ? t("Destination") : `${t("Stop")} ${index + 1}`
+                  }
                   className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none transition focus:border-ring focus:ring-3 focus:ring-ring/20"
                 />
                 {mode === "multi_stop" && stops.length > 1 ? (
@@ -214,7 +220,7 @@ export function TripPlanner({ templates }: TripPlannerProps) {
         </div>
 
         <div className="rounded-2xl border border-border/70 bg-muted/40 p-4">
-          <p className="text-sm font-medium">Route preview</p>
+          <p className="text-sm font-medium">{t("Route preview")}</p>
           <p className="mt-2 text-sm text-muted-foreground">
             {formatTripRoute(["Home", ...visibleStops.filter(Boolean), "Home"])}
           </p>
@@ -228,8 +234,9 @@ export function TripPlanner({ templates }: TripPlannerProps) {
 
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="text-sm text-muted-foreground">
-            Items are copied when you create the trip, and the first checklist leg
-            starts right away, so later template edits won&apos;t change this checklist.
+            {t(
+              "Items are copied when you create the trip, and the first checklist leg starts right away, so later template edits won't change this checklist.",
+            )}
           </p>
           <Button
             type="button"
@@ -248,19 +255,19 @@ export function TripPlanner({ templates }: TripPlannerProps) {
                     })),
                   });
 
-                  router.push(`/trips/${result.tripId}`);
+                  router.push(i18n?.localizePath(`/trips/${result.tripId}`) ?? `/trips/${result.tripId}`);
                   router.refresh();
                 } catch (createError) {
                   setError(
                     createError instanceof Error
                       ? createError.message
-                      : "Unable to create the trip right now.",
+                      : t("Unable to create the trip right now."),
                   );
                 }
               });
             }}
           >
-            {isPending ? "Creating and starting trip..." : "Create and start trip"}
+            {isPending ? t("Creating and starting trip...") : t("Create and start trip")}
           </Button>
         </div>
       </CardContent>

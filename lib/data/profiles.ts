@@ -1,5 +1,6 @@
 import type { Profile } from "@/lib/domain/types";
 import { STARTER_TEMPLATE_NAME } from "@/lib/domain/constants";
+import type { Locale } from "@/lib/i18n/config";
 import type { TypedSupabaseClient } from "@/lib/supabase/types";
 
 import { requireValue, throwIfSupabaseError } from "@/lib/data/shared";
@@ -43,9 +44,11 @@ export async function ensureProfileStarterTemplate(
   client: TypedSupabaseClient,
   profileId: string,
   templateName = STARTER_TEMPLATE_NAME,
+  locale?: Locale,
 ): Promise<string> {
   const { data, error } = await client.rpc("ensure_profile_starter_template", {
     p_profile_id: profileId,
+    p_locale: locale,
     p_template_name: templateName,
   });
 
@@ -58,12 +61,14 @@ export async function bootstrapProfile(
   client: TypedSupabaseClient,
   profileId: string,
   templateName = STARTER_TEMPLATE_NAME,
+  locale?: Locale,
 ): Promise<ProfileBootstrapResult> {
   const profile = await ensureProfile(client, profileId);
   const defaultTemplateId = await ensureProfileStarterTemplate(
     client,
     profileId,
     templateName,
+    locale,
   );
 
   return {

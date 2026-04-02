@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Star } from "lucide-react";
 
+import { useOptionalI18n } from "@/components/i18n/i18n-provider";
 import type { TemplateSummary } from "@/app/actions/templates";
 import { CreateTemplateForm } from "@/components/templates/create-template-form";
 import { Badge } from "@/components/ui/badge";
@@ -21,14 +22,16 @@ function TemplateLink({
   template,
   isActive,
   label,
+  href,
 }: {
   template: TemplateSummary;
   isActive: boolean;
   label?: string;
+  href: string;
 }) {
   return (
     <Link
-      href={`/templates/${template.id}`}
+      href={href}
       className={cn(
         "block rounded-2xl border border-border/70 bg-background/85 p-4 shadow-sm transition hover:border-foreground/20 hover:bg-background",
         isActive &&
@@ -61,6 +64,9 @@ export function TemplateSidebar({
   canMutate,
 }: TemplateSidebarProps) {
   const pathname = usePathname();
+  const i18n = useOptionalI18n();
+  const localizeHref = (value: string) => i18n?.localizePath(value) ?? value;
+  const t = (value: string) => i18n?.t(value) ?? value;
   const [showCreateForm, setShowCreateForm] = useState(false);
   const defaultTemplate =
     templates.find((template) => template.isDefault) ?? templates[0] ?? null;
@@ -74,19 +80,20 @@ export function TemplateSidebar({
         <CardHeader className="gap-2">
           <CardTitle className="text-base">Default template</CardTitle>
           <p className="text-sm leading-6 text-muted-foreground">
-            This is the main list most trips should start from.
+            {t("This is the main list most trips should start from.")}
           </p>
         </CardHeader>
         <CardContent>
           {defaultTemplate ? (
             <TemplateLink
               template={defaultTemplate}
-              isActive={pathname === `/templates/${defaultTemplate.id}`}
-              label="Start here"
+              href={localizeHref(`/templates/${defaultTemplate.id}`)}
+              isActive={pathname === localizeHref(`/templates/${defaultTemplate.id}`)}
+              label={t("Start here")}
             />
           ) : (
             <div className="rounded-2xl border border-dashed border-border/80 bg-muted/35 p-4 text-sm leading-6 text-muted-foreground">
-              Your starter template should appear here automatically.
+              {t("Your starter template should appear here automatically.")}
             </div>
           )}
         </CardContent>
@@ -94,9 +101,9 @@ export function TemplateSidebar({
 
       <Card className="border border-border/70 bg-card/88 shadow-sm">
         <CardHeader className="gap-2">
-          <CardTitle className="text-base">Other templates</CardTitle>
+          <CardTitle className="text-base">{t("Other templates")}</CardTitle>
           <p className="text-sm leading-6 text-muted-foreground">
-            Keep extras only for clearly different trip styles.
+            {t("Keep extras only for clearly different trip styles.")}
           </p>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -105,12 +112,13 @@ export function TemplateSidebar({
               <TemplateLink
                 key={template.id}
                 template={template}
-                isActive={pathname === `/templates/${template.id}`}
+                href={localizeHref(`/templates/${template.id}`)}
+                isActive={pathname === localizeHref(`/templates/${template.id}`)}
               />
             ))
           ) : (
             <div className="rounded-2xl border border-dashed border-border/80 bg-muted/35 p-4 text-sm leading-6 text-muted-foreground">
-              No extra templates yet.
+              {t("No extra templates yet.")}
             </div>
           )}
         </CardContent>
@@ -119,9 +127,9 @@ export function TemplateSidebar({
       {defaultTemplate ? (
         <Card className="border border-border/70 bg-card/90 shadow-sm">
           <CardHeader className="gap-2">
-            <CardTitle className="text-base">Create another template</CardTitle>
+            <CardTitle className="text-base">{t("Create another template")}</CardTitle>
             <p className="text-sm leading-6 text-muted-foreground">
-              Use this for a real variation like winter gear or work travel.
+              {t("Use this for a real variation like winter gear or work travel.")}
             </p>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -129,10 +137,10 @@ export function TemplateSidebar({
               <>
                 <CreateTemplateForm
                   disabled={!canMutate}
-                  fieldLabel="Extra template name"
+                  fieldLabel={t("Extra template name")}
                   onCreated={() => setShowCreateForm(false)}
-                  placeholder="Winter carry-on"
-                  submitLabel="Create extra template"
+                  placeholder={t("Winter carry-on")}
+                  submitLabel={t("Create extra template")}
                 />
                 <Button
                   type="button"
@@ -140,7 +148,7 @@ export function TemplateSidebar({
                   className="h-10 w-full rounded-xl"
                   onClick={() => setShowCreateForm(false)}
                 >
-                  Cancel
+                  {t("Cancel")}
                 </Button>
               </>
             ) : (
@@ -151,7 +159,7 @@ export function TemplateSidebar({
                 className="h-11 w-full rounded-xl"
                 onClick={() => setShowCreateForm(true)}
               >
-                Create extra template
+                {t("Create extra template")}
               </Button>
             )}
           </CardContent>
@@ -159,18 +167,17 @@ export function TemplateSidebar({
       ) : (
         <Card className="border border-border/70 bg-card/90 shadow-sm">
           <CardHeader className="gap-2">
-            <CardTitle className="text-base">Create a template now</CardTitle>
+            <CardTitle className="text-base">{t("Create a template now")}</CardTitle>
             <p className="text-sm leading-6 text-muted-foreground">
-              If the starter template is delayed, create one here so you can keep
-              going.
+              {t("If the starter template is delayed, create one here so you can keep going.")}
             </p>
           </CardHeader>
           <CardContent>
             <CreateTemplateForm
               disabled={!canMutate}
-              fieldLabel="Template name"
-              placeholder="Weekend carry-on"
-              submitLabel="Create template"
+              fieldLabel={t("Template name")}
+              placeholder={t("Weekend carry-on")}
+              submitLabel={t("Create template")}
             />
           </CardContent>
         </Card>
