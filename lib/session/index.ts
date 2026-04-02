@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 
 import {
-  PACKING_APP_USER_ID_COOKIE,
+  SESSION_USER_ID_COOKIE_NAMES,
   STARTER_TEMPLATE_NAME,
 } from "@/lib/domain/constants";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -188,9 +188,16 @@ export function getSessionCookieOptions() {
 
 async function getCurrentAnonymousUserId() {
   const cookieStore = await cookies();
-  const value = cookieStore.get(PACKING_APP_USER_ID_COOKIE)?.value;
 
-  return isSessionUserId(value) ? value : null;
+  for (const cookieName of SESSION_USER_ID_COOKIE_NAMES) {
+    const value = cookieStore.get(cookieName)?.value;
+
+    if (isSessionUserId(value)) {
+      return value;
+    }
+  }
+
+  return null;
 }
 
 function createAnonymousSessionIdentity(userId: string): SessionIdentity {

@@ -5,7 +5,10 @@ import { LogIn } from "lucide-react";
 import type { VariantProps } from "class-variance-authority";
 
 import { Button, buttonVariants } from "@/components/ui/button";
-import { PACKING_APP_AUTH_NEXT_COOKIE } from "@/lib/domain/constants";
+import {
+  LEGACY_PACKING_APP_AUTH_NEXT_COOKIE,
+  PACKMAP_AUTH_NEXT_COOKIE,
+} from "@/lib/domain/constants";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 type GoogleSignInButtonProps = {
@@ -51,9 +54,10 @@ export function GoogleSignInButton({
             }
 
             const redirectTo = new URL("/auth/callback", window.location.origin);
-            document.cookie = `${PACKING_APP_AUTH_NEXT_COOKIE}=${encodeURIComponent(
+            document.cookie = `${PACKMAP_AUTH_NEXT_COOKIE}=${encodeURIComponent(
               nextPath
             )}; Path=/; SameSite=Lax; Max-Age=600`;
+            document.cookie = `${LEGACY_PACKING_APP_AUTH_NEXT_COOKIE}=; Path=/; SameSite=Lax; Max-Age=0`;
             const cookieNames = document.cookie
               .split(";")
               .map((cookie) => cookie.trim().split("=")[0])

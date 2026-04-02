@@ -135,6 +135,11 @@ export type RemoveTemplateItemInput = {
   templateItemId: string;
 };
 
+export type RemoveTemplateItemsInput = {
+  templateId: string;
+  templateItemIds: string[];
+};
+
 type TemplateRecord = {
   id: string;
   name: string;
@@ -1543,6 +1548,71 @@ export async function removeTemplateItem(
         error instanceof Error
           ? error.message
           : "Unable to remove the template item.",
+    };
+  }
+}
+
+export async function removeTemplateItems(
+  input: RemoveTemplateItemsInput,
+): Promise<ActionResult<{ templateItemIds: string[] }>> {
+  const context = await requireMutationContext();
+  if (!context.ok) {
+    return context;
+  }
+
+  try {
+    const { supabase, userId } = context.data;
+    await ensureOwnedTemplateOrThrow(supabase, userId, input.templateId);
+
+    const templateItemIds = [...new Set(input.templateItemIds.map(cleanText).filter(Boolean))];
+
+    if (templateItemIds.length === 0) {
+      throw new Error("Choose at least one item to remove.");
+    }
+
+    const existingItemsResult = await supabase
+      .from("packing_template_items")
+      .select("id")
+      .eq("template_id", input.templateId)
+      .in("id", templateItemIds);
+
+    if (existingItemsResult.error) {
+      throw new Error(existingItemsResult.error.message);
+    }
+
+    const existingItemIds = new Set(
+      (existingItemsResult.data ?? [])
+        .map((row) => asString(asRecord(row)?.id))
+        .filter((value): value is string => value !== null),
+    );
+
+    if (existingItemIds.size !== templateItemIds.length) {
+      throw new Error("One or more selected items could not be found.");
+    }
+
+    const deleteResult = await supabase
+      .from("packing_template_items")
+      .delete()
+      .eq("template_id", input.templateId)
+      .in("id", templateItemIds);
+
+    if (deleteResult.error) {
+      throw new Error(deleteResult.error.message);
+    }
+
+    await revalidateTemplatePaths(input.templateId);
+
+    return {
+      ok: true,
+      data: { templateItemIds },
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : "Unable to remove the selected template items.",
     };
   }
 }

@@ -2,8 +2,12 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
 import {
-  PACKING_APP_AUTH_NEXT_COOKIE,
-  PACKING_APP_USER_ID_COOKIE,
+  AUTH_NEXT_COOKIE_NAMES,
+  LEGACY_PACKING_APP_AUTH_NEXT_COOKIE,
+  LEGACY_PACKING_APP_USER_ID_COOKIE,
+  PACKMAP_AUTH_NEXT_COOKIE,
+  PACKMAP_USER_ID_COOKIE,
+  SESSION_USER_ID_COOKIE_NAMES,
 } from "@/lib/domain/constants";
 import {
   createSessionIdentityFromAuthUser,
@@ -19,18 +23,31 @@ function getErrorRedirectUrl(request: NextRequest, nextPath: string, message: st
   return redirectUrl;
 }
 
+function getRequestCookieValue(request: NextRequest, cookieNames: readonly string[]) {
+  for (const cookieName of cookieNames) {
+    const value = request.cookies.get(cookieName)?.value ?? null;
+
+    if (value) {
+      return value;
+    }
+  }
+
+  return null;
+}
+
 export async function GET(request: NextRequest) {
-  const nextCookieValue = request.cookies.get(PACKING_APP_AUTH_NEXT_COOKIE)?.value ?? null;
+  const nextCookieValue = getRequestCookieValue(request, AUTH_NEXT_COOKIE_NAMES);
   const nextPath = getSafeNextPath(
     request.nextUrl.searchParams.get("next") ??
       (nextCookieValue ? decodeURIComponent(nextCookieValue) : null),
     "/dashboard"
   );
-  const anonymousUserId = request.cookies.get(PACKING_APP_USER_ID_COOKIE)?.value ?? null;
+  const anonymousUserId = getRequestCookieValue(request, SESSION_USER_ID_COOKIE_NAMES);
   const cookieNames = request.cookies.getAll().map((cookie) => cookie.name);
   const response = NextResponse.redirect(new URL(nextPath, request.url));
   response.headers.set("Cache-Control", "private, no-store");
-  response.cookies.delete(PACKING_APP_AUTH_NEXT_COOKIE);
+  response.cookies.delete(PACKMAP_AUTH_NEXT_COOKIE);
+  response.cookies.delete(LEGACY_PACKING_APP_AUTH_NEXT_COOKIE);
 
   console.info("[google-auth] finalize request", {
     anonymousUserIdPresent: Boolean(anonymousUserId),
@@ -113,7 +130,8 @@ export async function GET(request: NextRequest) {
       });
 
       if (merged) {
-        response.cookies.delete(PACKING_APP_USER_ID_COOKIE);
+        response.cookies.delete(PACKMAP_USER_ID_COOKIE);
+        response.cookies.delete(LEGACY_PACKING_APP_USER_ID_COOKIE);
       }
     }
   } catch (error) {

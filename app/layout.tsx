@@ -17,11 +17,11 @@ const display = Fraunces({
 
 export const metadata: Metadata = {
   title: {
-    default: "Packing App",
-    template: "%s | Packing App",
+    default: "Packmap",
+    template: "%s | Packmap",
   },
   description:
-    "Open the default packing list, turn it into a trip, and pack each leg with a focused checklist.",
+    "Packmap helps you open the default packing list, turn it into a trip, and pack each leg with a focused checklist.",
 };
 
 export default function RootLayout({

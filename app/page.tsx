@@ -87,7 +87,7 @@ export default async function Home({
                   className="gap-1.5 border-emerald-200 bg-emerald-50/90 text-emerald-950"
                 >
                   <Sparkles className="size-3.5" />
-                  Packing App
+                  Packmap
                 </Badge>
                 <div className="inline-flex items-center gap-2 rounded-full border border-slate-200/80 bg-white/80 px-3 py-1 text-xs font-medium text-slate-600">
                   <CheckCircle2 className="size-3.5 text-emerald-600" />

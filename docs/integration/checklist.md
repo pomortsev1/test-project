@@ -9,7 +9,7 @@
 
 ## Integration Checks
 - Shared enum values are unchanged.
-- Cookie name remains `packing_app_user_id`.
+- Cookie name remains `packmap_user_id`.
 - No thread edited outside its scope without documenting why.
 - Template and trip actions use the same shared types.
 - Session bootstrap works before any personalized data loader runs.

@@ -1,5 +1,16 @@
-export const PACKING_APP_USER_ID_COOKIE = "packing_app_user_id";
-export const PACKING_APP_AUTH_NEXT_COOKIE = "packing_app_auth_next";
+export const PACKMAP_USER_ID_COOKIE = "packmap_user_id";
+export const LEGACY_PACKING_APP_USER_ID_COOKIE = "packing_app_user_id";
+export const SESSION_USER_ID_COOKIE_NAMES = [
+  PACKMAP_USER_ID_COOKIE,
+  LEGACY_PACKING_APP_USER_ID_COOKIE,
+] as const;
+
+export const PACKMAP_AUTH_NEXT_COOKIE = "packmap_auth_next";
+export const LEGACY_PACKING_APP_AUTH_NEXT_COOKIE = "packing_app_auth_next";
+export const AUTH_NEXT_COOKIE_NAMES = [
+  PACKMAP_AUTH_NEXT_COOKIE,
+  LEGACY_PACKING_APP_AUTH_NEXT_COOKIE,
+] as const;
 export const STARTER_TEMPLATE_NAME = "Starter Template";
 export const HOME_STOP_NAME = "Home";
 

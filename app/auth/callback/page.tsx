@@ -5,7 +5,7 @@ import { LoaderCircle } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
-import { PACKING_APP_AUTH_NEXT_COOKIE } from "@/lib/domain/constants";
+import { AUTH_NEXT_COOKIE_NAMES } from "@/lib/domain/constants";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 function readCookie(name: string) {
@@ -16,6 +16,18 @@ function readCookie(name: string) {
     .find((cookie) => cookie.startsWith(prefix));
 
   return match ? decodeURIComponent(match.slice(prefix.length)) : null;
+}
+
+function readFirstCookie(names: readonly string[]) {
+  for (const name of names) {
+    const value = readCookie(name);
+
+    if (value) {
+      return value;
+    }
+  }
+
+  return null;
 }
 
 function getCookieNames() {
@@ -36,7 +48,7 @@ function AuthCallbackContent() {
       const providerError =
         searchParams.get("error_description") ?? searchParams.get("error");
       const nextPath =
-        readCookie(PACKING_APP_AUTH_NEXT_COOKIE) ??
+        readFirstCookie(AUTH_NEXT_COOKIE_NAMES) ??
         searchParams.get("next") ??
         "/dashboard";
 

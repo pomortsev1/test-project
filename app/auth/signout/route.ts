@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-import { PACKING_APP_USER_ID_COOKIE } from "@/lib/domain/constants";
+import { SESSION_USER_ID_COOKIE_NAMES } from "@/lib/domain/constants";
 import {
   getAuthChoicePath,
   getBootstrapPath,
@@ -13,8 +13,10 @@ const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function hasAnonymousCookie(request: NextRequest) {
-  const value = request.cookies.get(PACKING_APP_USER_ID_COOKIE)?.value;
-  return Boolean(value && UUID_PATTERN.test(value));
+  return SESSION_USER_ID_COOKIE_NAMES.some((cookieName) => {
+    const value = request.cookies.get(cookieName)?.value;
+    return Boolean(value && UUID_PATTERN.test(value));
+  });
 }
 
 export async function GET(request: NextRequest) {

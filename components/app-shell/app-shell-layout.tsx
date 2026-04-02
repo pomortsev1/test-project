@@ -37,7 +37,7 @@ export function AppShellLayout({
                 className="inline-flex w-fit items-center gap-2 rounded-full border border-slate-200/80 bg-white/70 px-3 py-1.5 text-sm font-medium text-slate-800 shadow-sm backdrop-blur"
               >
                 <Sparkles className="size-4 text-amber-600" />
-                Packing App
+                Packmap
               </Link>
 
               <div className="flex flex-wrap items-center gap-2 text-sm text-slate-600">

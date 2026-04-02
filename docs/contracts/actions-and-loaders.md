@@ -3,7 +3,7 @@
 These contracts are stable enough for worker threads to build against. Keep naming consistent unless the coordinator explicitly changes it.
 
 ## Dynamic Rendering Rule
-- Any route depending on `packing_app_user_id` should be treated as dynamic.
+- Any route depending on `packmap_user_id` should be treated as dynamic.
 - Do not add cache behavior to personalized loaders.
 
 ## Suggested Shared Modules

@@ -3,14 +3,14 @@
 ## Entry Choice
 1. User opens the app.
 2. If a Google auth session already exists, render the authenticated workspace.
-3. Otherwise, if `packing_app_user_id` already exists, render the anonymous workspace.
+3. Otherwise, if `packmap_user_id` already exists, render the anonymous workspace.
 4. Otherwise, show an entry choice with:
    - `Continue with Google`
    - `Continue anonymously`
 
 ## First Anonymous Visit
 1. User chooses anonymous mode.
-2. Server checks for `packing_app_user_id`.
+2. Server checks for `packmap_user_id`.
 3. If missing, bootstrap endpoint or action creates a UUID cookie.
 4. Profile bootstrap ensures a `profiles` row exists.
 5. If the profile has no templates yet, create a user-owned default template copied from the system starter template.

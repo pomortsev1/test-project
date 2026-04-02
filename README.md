@@ -1,4 +1,4 @@
-This is a Next.js App Router packing app with Supabase-backed data, Google authentication, and browser-based anonymous mode.
+This is Packmap, a Next.js App Router packing app with Supabase-backed data, Google authentication, and browser-based anonymous mode.
 
 ## Stack
 
@@ -69,7 +69,7 @@ npx supabase start
 
 ## Authentication Modes
 
-- Anonymous mode keeps using the `packing_app_user_id` cookie and stays available.
+- Anonymous mode uses the `packmap_user_id` cookie and stays available.
 - Google mode uses the Supabase auth user ID for the active workspace.
 - If someone starts anonymously and then signs in with Google, the anonymous profile is merged into the Google-backed profile during the auth callback.
 - After that upgrade, signing out starts a fresh anonymous workspace instead of keeping a stale pre-merge cookie identity.

@@ -1,7 +1,7 @@
-# Packing Checklist Travel App Spec
+# Packmap Product Spec
 
 ## Product Goal
-Build a Supabase-backed travel packing app that feels simple on the first visit and stays useful as the data grows.
+Build Packmap, a Supabase-backed travel packing app that feels simple on the first visit and stays useful as the data grows.
 
 The product has two entry modes:
 - Google sign-in through Supabase Auth

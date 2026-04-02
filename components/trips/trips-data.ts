@@ -2,7 +2,11 @@ import { randomUUID } from "node:crypto";
 
 import { cookies } from "next/headers";
 
-import { PACKING_APP_USER_ID_COOKIE } from "@/lib/domain/constants";
+import {
+  LEGACY_PACKING_APP_USER_ID_COOKIE,
+  PACKMAP_USER_ID_COOKIE,
+  SESSION_USER_ID_COOKIE_NAMES,
+} from "@/lib/domain/constants";
 import {
   getCurrentSessionIdentity,
   getCurrentUserId as getCurrentSessionUserId,
@@ -156,17 +160,29 @@ async function ensureCurrentUserId() {
   }
 
   const cookieStore = await cookies();
-  const existingValue = cookieStore
-    .get(PACKING_APP_USER_ID_COOKIE)
-    ?.value?.trim();
+  const existingValue = SESSION_USER_ID_COOKIE_NAMES.map((cookieName) =>
+    cookieStore.get(cookieName)?.value?.trim()
+  ).find((value) => isUuid(value));
 
   if (isUuid(existingValue)) {
+    if (cookieStore.get(PACKMAP_USER_ID_COOKIE)?.value !== existingValue) {
+      cookieStore.set(
+        PACKMAP_USER_ID_COOKIE,
+        existingValue,
+        getSessionCookieOptions()
+      );
+    }
+
+    if (cookieStore.get(LEGACY_PACKING_APP_USER_ID_COOKIE)?.value) {
+      cookieStore.delete(LEGACY_PACKING_APP_USER_ID_COOKIE);
+    }
+
     return existingValue;
   }
 
   const userId = randomUUID();
   cookieStore.set(
-    PACKING_APP_USER_ID_COOKIE,
+    PACKMAP_USER_ID_COOKIE,
     userId,
     getSessionCookieOptions()
   );

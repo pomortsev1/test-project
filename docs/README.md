@@ -1,6 +1,6 @@
-# Packing App Agent Kit
+# Packmap Agent Kit
 
-This folder is the execution kit for building the packing checklist travel app with multiple agent threads.
+This folder is the execution kit for building Packmap with multiple agent threads.
 
 ## Recommended Run Order
 1. Read `docs/product/packing-app-spec.md`.

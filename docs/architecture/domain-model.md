@@ -10,7 +10,7 @@
 These enum values are contract-level and should not be renamed by worker threads.
 
 ## Cookie Contract
-- Cookie name: `packing_app_user_id`
+- Cookie name: `packmap_user_id`
 - Value: UUID string
 - Lifetime: persistent cookie, one year max age is acceptable
 - Cookie should be set only in a Route Handler or Server Action

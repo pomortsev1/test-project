@@ -1,7 +1,11 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-import { PACKING_APP_USER_ID_COOKIE } from "@/lib/domain/constants";
+import {
+  LEGACY_PACKING_APP_USER_ID_COOKIE,
+  PACKMAP_USER_ID_COOKIE,
+  SESSION_USER_ID_COOKIE_NAMES,
+} from "@/lib/domain/constants";
 import {
   ensureProfileForUserId,
   getSafeNextPath,
@@ -21,20 +25,34 @@ function isSessionUserId(value: string | null | undefined): value is string {
   );
 }
 
+function getAnonymousUserIdFromRequest(request: NextRequest) {
+  for (const cookieName of SESSION_USER_ID_COOKIE_NAMES) {
+    const value = request.cookies.get(cookieName)?.value;
+
+    if (isSessionUserId(value)) {
+      return value;
+    }
+  }
+
+  return null;
+}
+
 export async function GET(request: NextRequest) {
   const nextPath = getRequestNextPath(request);
-  const existingUserId = request.cookies.get(PACKING_APP_USER_ID_COOKIE)?.value;
-  const userId: string = isSessionUserId(existingUserId)
-    ? existingUserId
-    : crypto.randomUUID();
+  const existingUserId = getAnonymousUserIdFromRequest(request);
+  const userId = existingUserId ?? crypto.randomUUID();
   const response = NextResponse.redirect(new URL(nextPath, request.url));
 
-  if (!isSessionUserId(existingUserId)) {
+  if (request.cookies.get(PACKMAP_USER_ID_COOKIE)?.value !== userId) {
     response.cookies.set(
-      PACKING_APP_USER_ID_COOKIE,
+      PACKMAP_USER_ID_COOKIE,
       userId,
       getSessionCookieOptions()
     );
+  }
+
+  if (request.cookies.get(LEGACY_PACKING_APP_USER_ID_COOKIE)?.value) {
+    response.cookies.delete(LEGACY_PACKING_APP_USER_ID_COOKIE);
   }
 
   response.headers.set("Cache-Control", "no-store");

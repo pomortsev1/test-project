@@ -17,7 +17,7 @@ Before coding, read:
 - [`docs/contracts/actions-and-loaders.md`](/Users/ivan.pomortsev/Projects/test-project/docs/contracts/actions-and-loaders.md)
 
 Assume Thread 01 either already landed or is available in your branch. Implement:
-- UUID cookie bootstrap using `packing_app_user_id`
+- UUID cookie bootstrap using `packmap_user_id`
 - profile bootstrap for first visit
 - dashboard shell replacing the starter landing page
 - metadata/title update

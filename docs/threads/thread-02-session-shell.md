@@ -25,13 +25,13 @@ Add anonymous UUID bootstrap, profile initialization, and the top-level dashboar
 - template and trip action modules unless coordinator approves
 
 ## Required Deliverables
-- bootstrap flow that ensures `packing_app_user_id` exists
+- bootstrap flow that ensures `packmap_user_id` exists
 - profile bootstrap on first visit
 - initial dashboard shell with sections/placeholders for:
   - active trip
   - trips
   - templates
-- metadata/title update for the packing app
+- metadata/title update for Packmap
 
 ## Fixed Decisions
 - Cookie is persistent and UUID-based

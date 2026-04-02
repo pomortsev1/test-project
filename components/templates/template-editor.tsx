@@ -24,6 +24,7 @@ import {
   deleteTemplate,
   getCatalogSuggestions,
   removeTemplateItem,
+  removeTemplateItems,
   renameTemplate,
   setDefaultTemplate,
   updateTemplateItem,
@@ -58,6 +59,8 @@ type ItemRowProps = {
   categoryNames: string[];
   canMutate: boolean;
   supportsOptionalMeasurements: boolean;
+  isSelected: boolean;
+  onSelectedChange: (templateItemId: string, checked: boolean) => void;
 };
 
 type AddItemComposerProps = {
@@ -133,6 +136,8 @@ function EditableTemplateItemRow({
   categoryNames,
   canMutate,
   supportsOptionalMeasurements,
+  isSelected,
+  onSelectedChange,
 }: ItemRowProps) {
   const router = useRouter();
   const categoryListId = useId();
@@ -149,86 +154,112 @@ function EditableTemplateItemRow({
   const isDisabled = !canMutate || isPending;
 
   return (
-    <div className="rounded-2xl border border-border/70 bg-background/80 p-4 shadow-sm">
-      <div className="grid gap-3 md:grid-cols-[minmax(0,1.2fr)_minmax(0,0.9fr)_120px_120px_auto]">
-        <div className="space-y-1.5">
-          <label className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
-            Item
-          </label>
-          <input
-            value={draft.itemName}
-            disabled={isDisabled}
-            onChange={(event) =>
-              setDraft((current) => ({
-                ...current,
-                itemName: event.target.value,
-              }))
-            }
-            className="h-10 w-full rounded-xl border border-border/80 bg-background px-3 text-sm outline-none transition focus:border-foreground/30 focus:ring-4 focus:ring-foreground/5 disabled:cursor-not-allowed disabled:opacity-60"
-          />
+    <div
+      className={cn(
+        "rounded-2xl border border-border/70 bg-background/80 p-4 shadow-sm",
+        isSelected && "border-foreground/25 bg-foreground/[0.03] ring-1 ring-foreground/10",
+      )}
+    >
+      <div className="space-y-3">
+        <div className="grid gap-3 md:grid-cols-[72px_minmax(0,1fr)]">
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
+              Select
+            </label>
+            <label className="flex h-10 items-center">
+              <input
+                type="checkbox"
+                checked={isSelected}
+                disabled={isDisabled}
+                onChange={(event) =>
+                  onSelectedChange(item.id, event.target.checked)
+                }
+                aria-label={`Select ${item.itemName}`}
+                className="size-4 rounded border-border"
+              />
+            </label>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
+              Item
+            </label>
+            <input
+              value={draft.itemName}
+              disabled={isDisabled}
+              onChange={(event) =>
+                setDraft((current) => ({
+                  ...current,
+                  itemName: event.target.value,
+                }))
+              }
+              className="h-10 w-full rounded-xl border border-border/80 bg-background px-3 text-sm outline-none transition focus:border-foreground/30 focus:ring-4 focus:ring-foreground/5 disabled:cursor-not-allowed disabled:opacity-60"
+            />
+          </div>
         </div>
 
-        <div className="space-y-1.5">
-          <label className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
-            Category
-          </label>
-          <input
-            list={categoryListId}
-            value={draft.categoryName}
-            disabled={isDisabled}
-            onChange={(event) =>
-              setDraft((current) => ({
-                ...current,
-                categoryName: event.target.value,
-              }))
-            }
-            className="h-10 w-full rounded-xl border border-border/80 bg-background px-3 text-sm outline-none transition focus:border-foreground/30 focus:ring-4 focus:ring-foreground/5 disabled:cursor-not-allowed disabled:opacity-60"
-          />
-          <datalist id={categoryListId}>
-            {categoryNames.map((categoryName) => (
-              <option key={categoryName} value={categoryName} />
-            ))}
-          </datalist>
-        </div>
+        <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_120px_120px_auto]">
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
+              Category
+            </label>
+            <input
+              list={categoryListId}
+              value={draft.categoryName}
+              disabled={isDisabled}
+              onChange={(event) =>
+                setDraft((current) => ({
+                  ...current,
+                  categoryName: event.target.value,
+                }))
+              }
+              className="h-10 w-full rounded-xl border border-border/80 bg-background px-3 text-sm outline-none transition focus:border-foreground/30 focus:ring-4 focus:ring-foreground/5 disabled:cursor-not-allowed disabled:opacity-60"
+            />
+            <datalist id={categoryListId}>
+              {categoryNames.map((categoryName) => (
+                <option key={categoryName} value={categoryName} />
+              ))}
+            </datalist>
+          </div>
 
-        <div className="space-y-1.5">
-          <label className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
-            Quantity
-          </label>
-          <input
-            type="number"
-            min="0.1"
-            step="0.1"
-            value={draft.quantity}
-            disabled={isDisabled}
-            onChange={(event) =>
-              setDraft((current) => ({
-                ...current,
-                quantity: event.target.value,
-              }))
-            }
-            className="h-10 w-full rounded-xl border border-border/80 bg-background px-3 text-sm outline-none transition focus:border-foreground/30 focus:ring-4 focus:ring-foreground/5 disabled:cursor-not-allowed disabled:opacity-60"
-          />
-        </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
+              Quantity
+            </label>
+            <input
+              type="number"
+              min="0.1"
+              step="0.1"
+              value={draft.quantity}
+              disabled={isDisabled}
+              onChange={(event) =>
+                setDraft((current) => ({
+                  ...current,
+                  quantity: event.target.value,
+                }))
+              }
+              className="h-10 w-full rounded-xl border border-border/80 bg-background px-3 text-sm outline-none transition focus:border-foreground/30 focus:ring-4 focus:ring-foreground/5 disabled:cursor-not-allowed disabled:opacity-60"
+            />
+          </div>
 
-        <div className="space-y-1.5">
-          <label className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
-            Unit
-          </label>
-          <input
-            value={draft.unit}
-            disabled={isDisabled}
-            onChange={(event) =>
-              setDraft((current) => ({
-                ...current,
-                unit: event.target.value,
-              }))
-            }
-            className="h-10 w-full rounded-xl border border-border/80 bg-background px-3 text-sm outline-none transition focus:border-foreground/30 focus:ring-4 focus:ring-foreground/5 disabled:cursor-not-allowed disabled:opacity-60"
-          />
-        </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
+              Unit
+            </label>
+            <input
+              value={draft.unit}
+              disabled={isDisabled}
+              onChange={(event) =>
+                setDraft((current) => ({
+                  ...current,
+                  unit: event.target.value,
+                }))
+              }
+              className="h-10 w-full rounded-xl border border-border/80 bg-background px-3 text-sm outline-none transition focus:border-foreground/30 focus:ring-4 focus:ring-foreground/5 disabled:cursor-not-allowed disabled:opacity-60"
+            />
+          </div>
 
-        <div className="flex items-end gap-2">
+          <div className="flex items-end gap-2">
           <Button
             type="button"
             size="sm"
@@ -300,6 +331,7 @@ function EditableTemplateItemRow({
             <Trash2 className="size-4" />
           </Button>
         </div>
+      </div>
       </div>
 
       {error ? <p className="mt-3 text-sm text-destructive">{error}</p> : null}
@@ -648,11 +680,15 @@ export function TemplateEditor({
   const [name, setName] = useState(detail.template.name);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [selectedItemIds, setSelectedItemIds] = useState<string[]>([]);
   const [isPending, startTransition] = useTransition();
 
   const groupedItems = groupItemsByCategory(detail.items);
   const categoryNames = categories.map((category) => category.name);
   const isDisabled = !canMutate || isPending;
+  const totalItemCount = detail.items.length;
+  const selectedItemCount = selectedItemIds.length;
+  const allItemsSelected = totalItemCount > 0 && selectedItemCount === totalItemCount;
   const templateIntro = detail.template.isDefault
     ? "Edit this list first. Most trips should start here."
     : "Use this only when a trip needs a clearly different packing list.";
@@ -662,6 +698,18 @@ export function TemplateEditor({
   const emptyStateBody = detail.template.isDefault
     ? "Build one trusted list here, then create an extra template only when you need it."
     : "Keep this focused so it stays meaningfully different from your default list.";
+
+  function handleSelectedItemChange(templateItemId: string, checked: boolean) {
+    setSelectedItemIds((current) => {
+      if (checked) {
+        return current.includes(templateItemId)
+          ? current
+          : [...current, templateItemId];
+      }
+
+      return current.filter((itemId) => itemId !== templateItemId);
+    });
+  }
 
   return (
     <div className="space-y-6">
@@ -831,6 +879,83 @@ export function TemplateEditor({
       />
 
       <div className="space-y-4">
+        {groupedItems.length > 0 ? (
+          <Card className="border border-border/70 bg-card/92 shadow-sm">
+            <CardContent className="flex flex-col gap-3 py-5 sm:flex-row sm:items-center sm:justify-between">
+              <div className="space-y-1">
+                <p className="text-sm font-medium">
+                  {selectedItemCount > 0
+                    ? `${selectedItemCount} item${selectedItemCount === 1 ? "" : "s"} selected`
+                    : "Select items to delete them together"}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Use the checkboxes in the list to build a batch.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={isDisabled || totalItemCount === 0}
+                  className="rounded-xl"
+                  onClick={() =>
+                    setSelectedItemIds(
+                      allItemsSelected ? [] : detail.items.map((item) => item.id),
+                    )
+                  }
+                >
+                  {allItemsSelected ? "Clear selection" : "Select all"}
+                </Button>
+
+                <Button
+                  type="button"
+                  variant="destructive"
+                  disabled={isDisabled || selectedItemCount === 0}
+                  className="rounded-xl"
+                  onClick={() => {
+                    if (
+                      !window.confirm(
+                        `Remove ${selectedItemCount} selected item${selectedItemCount === 1 ? "" : "s"} from this template?`,
+                      )
+                    ) {
+                      return;
+                    }
+
+                    setError(null);
+                    setNotice(null);
+
+                    startTransition(async () => {
+                      const result = await removeTemplateItems({
+                        templateId: detail.template.id,
+                        templateItemIds: selectedItemIds,
+                      });
+
+                      if (!result.ok) {
+                        setError(result.error);
+                        return;
+                      }
+
+                      setSelectedItemIds([]);
+                      setNotice(
+                        `Removed ${result.data.templateItemIds.length} item${result.data.templateItemIds.length === 1 ? "" : "s"}.`,
+                      );
+                      router.refresh();
+                    });
+                  }}
+                >
+                  {isPending ? (
+                    <LoaderCircle className="size-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="size-4" />
+                  )}
+                  Delete selected
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ) : null}
+
         {groupedItems.length === 0 ? (
           <Card className="border border-dashed border-border/80 bg-card/70 shadow-sm">
             <CardContent className="py-10 text-center">
@@ -863,6 +988,8 @@ export function TemplateEditor({
                     categoryNames={categoryNames}
                     canMutate={canMutate}
                     supportsOptionalMeasurements={supportsOptionalMeasurements}
+                    isSelected={selectedItemIds.includes(item.id)}
+                    onSelectedChange={handleSelectedItemChange}
                   />
                 ))}
               </CardContent>
