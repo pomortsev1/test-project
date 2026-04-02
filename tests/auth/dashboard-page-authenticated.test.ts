@@ -102,12 +102,15 @@ describe("/dashboard authenticated render", () => {
     });
   });
 
-  it("shows the authenticated user's name and email on the dashboard page", async () => {
+  it("shows the authenticated user entry on the dashboard page", async () => {
     const sessionIdentity: SessionIdentity = {
       authMode: "google",
       avatarUrl: "https://lh3.googleusercontent.com/a/avatar-session",
       email: "traveler@example.com",
+      firstName: "Traveler",
+      fullName: "Traveler Example",
       label: "Traveler Example",
+      lastName: "Example",
       userId: "22222222-2222-4222-8222-222222222222",
     };
 
@@ -118,9 +121,8 @@ describe("/dashboard authenticated render", () => {
     const layout = await AppLayout({ children: page });
     const html = renderToStaticMarkup(layout);
 
-    expect(html).toContain("Google workspace");
-    expect(html).toContain("Traveler Example");
-    expect(html).toContain("traveler@example.com");
+    expect(html).toContain("Traveler");
+    expect(html).toContain("/profile");
     expect(html).toContain("Packmap");
     expect(html).toContain("Log out");
     expect(html).toContain("Switch to guest");

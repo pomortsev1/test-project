@@ -1,10 +1,11 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { LogOut, Mail, Sparkles } from "lucide-react";
+import { LogOut, Sparkles } from "lucide-react";
 
 import { SessionDebugLogger } from "@/components/auth/session-debug-logger";
 import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 import { Button } from "@/components/ui/button";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import type { SessionIdentity } from "@/lib/session";
 
 import { AppShellNav } from "./app-shell-nav";
@@ -21,12 +22,10 @@ export function AppShellLayout({
   sessionIdentity,
 }: AppShellLayoutProps) {
   const isGoogleSession = sessionIdentity?.authMode === "google";
-  const workspaceLabel = isGoogleSession ? "Google workspace" : "Guest workspace";
-  const googleLabel = sessionIdentity?.label ?? "Signed in";
-  const googleEmail =
-    sessionIdentity?.email && sessionIdentity.email !== googleLabel
-      ? sessionIdentity.email
-      : null;
+  const profileName =
+    sessionIdentity?.firstName ?? sessionIdentity?.fullName ?? sessionIdentity?.label ?? "Traveler";
+  const profileFullName =
+    sessionIdentity?.fullName ?? sessionIdentity?.label ?? profileName;
 
   return (
     <div className="packing-stage min-h-screen text-slate-950">
@@ -35,8 +34,8 @@ export function AppShellLayout({
       {process.env.NODE_ENV !== "production" ? <SessionDebugLogger /> : null}
       <div className="relative mx-auto flex min-h-screen w-full max-w-6xl flex-col px-4 py-5 sm:px-6 lg:px-8">
         <header className="packing-panel-soft border-0 px-4 py-3 sm:px-5">
-          <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:gap-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex min-w-0 flex-wrap items-center gap-3 lg:gap-4">
               <Link
                 href="/dashboard"
                 className="inline-flex w-fit items-center gap-2 rounded-full border border-slate-200/80 bg-white/70 px-3 py-1.5 text-sm font-medium text-slate-800 shadow-sm backdrop-blur"
@@ -44,29 +43,27 @@ export function AppShellLayout({
                 <Sparkles className="size-4 text-amber-600" />
                 Packmap
               </Link>
-
-              <div className="flex flex-wrap items-center gap-2 text-sm text-slate-600">
-                <span className="rounded-full border border-slate-200/80 bg-white/80 px-3 py-1 font-medium text-slate-700">
-                  {workspaceLabel}
-                </span>
-                {isGoogleSession ? (
-                  <span className="inline-flex max-w-full items-center gap-2">
-                    <Mail className="size-3.5 shrink-0" />
-                    <span className="truncate font-medium text-slate-700">
-                      {googleLabel}
-                    </span>
-                    {googleEmail ? (
-                      <span className="truncate text-slate-500">{googleEmail}</span>
-                    ) : null}
-                  </span>
-                ) : (
-                  <span>Saved on this browser</span>
-                )}
-              </div>
             </div>
 
-            <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
+            <div className="flex flex-wrap items-center justify-end gap-2">
               <AppShellNav />
+
+              {sessionIdentity ? (
+                <Link
+                  href="/profile"
+                  className="inline-flex max-w-full items-center gap-2 rounded-full border border-slate-200/80 bg-white/85 px-2.5 py-1.5 text-sm font-semibold text-slate-800 shadow-sm backdrop-blur transition hover:-translate-y-px hover:bg-white"
+                >
+                  <UserAvatar
+                    avatarUrl={sessionIdentity.avatarUrl}
+                    name={profileFullName}
+                    size="sm"
+                    className="border-slate-200/80"
+                  />
+                  <span className="max-w-32 truncate whitespace-nowrap">
+                    {profileName}
+                  </span>
+                </Link>
+              ) : null}
 
               <div className="flex flex-wrap items-center gap-2">
                 {!isGoogleSession ? (
@@ -85,7 +82,7 @@ export function AppShellLayout({
                       variant="outline"
                       size="sm"
                       className="rounded-full border-slate-200 bg-white/[0.85]"
-                      render={<Link href="/auth/signout?next=/dashboard" />}
+                      render={<a href="/auth/signout?next=/dashboard" />}
                     >
                       <LogOut className="size-3.5" />
                       Log out
@@ -96,7 +93,7 @@ export function AppShellLayout({
                       variant="outline"
                       size="sm"
                       className="rounded-full border-slate-200 bg-white/[0.85]"
-                      render={<Link href="/auth/signout?mode=anonymous&next=/dashboard" />}
+                      render={<a href="/auth/signout?mode=anonymous&next=/dashboard" />}
                     >
                       Switch to guest
                     </Button>

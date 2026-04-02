@@ -89,6 +89,11 @@ export type CategoryOptionsLoaderResult = LoaderState & {
   categories: CategoryOption[];
 };
 
+export type CatalogContextLoaderResult = LoaderState & {
+  categories: CategoryOption[];
+  suggestions: CatalogSuggestion[];
+};
+
 export type TemplateEditorCapabilities = {
   supportsOptionalMeasurements: boolean;
 };
@@ -1094,6 +1099,59 @@ export async function getCategoryOptionsForCurrentUser(): Promise<CategoryOption
         true,
         true,
         error instanceof Error ? error.message : "Unable to load categories.",
+      ),
+    };
+  }
+}
+
+export async function getCatalogContextForCurrentUser(): Promise<CatalogContextLoaderResult> {
+  const { userId, supabase, hasSession, isConfigured } = await getLoaderContext();
+
+  if (!isConfigured || !supabase) {
+    return {
+      categories: [],
+      suggestions: [],
+      ...buildLoaderState(
+        hasSession,
+        false,
+        "Supabase is not configured yet, so catalog items cannot load.",
+      ),
+    };
+  }
+
+  if (!hasSession || userId.length === 0) {
+    return {
+      categories: [],
+      suggestions: [],
+      ...buildLoaderState(
+        false,
+        true,
+        "No Google or anonymous session is available yet. Catalog items appear once you continue anonymously or sign in with Google.",
+      ),
+    };
+  }
+
+  try {
+    const { categories, suggestions } = await getCatalogContextFromDb(
+      supabase,
+      userId,
+    );
+
+    return {
+      categories,
+      suggestions,
+      ...buildLoaderState(true, true),
+    };
+  } catch (error) {
+    return {
+      categories: [],
+      suggestions: [],
+      ...buildLoaderState(
+        true,
+        true,
+        error instanceof Error
+          ? error.message
+          : "Unable to load catalog items.",
       ),
     };
   }

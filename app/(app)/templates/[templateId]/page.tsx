@@ -1,5 +1,5 @@
 import {
-  getCategoryOptionsForCurrentUser,
+  getCatalogContextForCurrentUser,
   getTemplateEditorCapabilities,
   getTemplateDetails,
 } from "@/app/actions/templates";
@@ -14,9 +14,9 @@ export default async function TemplateDetailPage({
   params: Promise<{ templateId: string }>;
 }) {
   const { templateId } = await params;
-  const [detailState, categoriesState, capabilities] = await Promise.all([
+  const [detailState, catalogState, capabilities] = await Promise.all([
     getTemplateDetails(templateId),
-    getCategoryOptionsForCurrentUser(),
+    getCatalogContextForCurrentUser(),
     getTemplateEditorCapabilities(),
   ]);
 
@@ -41,9 +41,10 @@ export default async function TemplateDetailPage({
     <TemplateEditor
       key={`${detailState.detail.template.id}:${detailState.detail.template.name}:${detailState.detail.template.itemCount}:${detailState.detail.template.isDefault}`}
       detail={detailState.detail}
-      categories={categoriesState.categories}
+      categories={catalogState.categories}
+      catalogSuggestions={catalogState.suggestions}
       canMutate={detailState.hasSession && detailState.isConfigured}
-      issue={detailState.issue ?? categoriesState.issue}
+      issue={detailState.issue ?? catalogState.issue}
       supportsOptionalMeasurements={capabilities.supportsOptionalMeasurements}
     />
   );

@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { ArrowRight, CheckCircle2, Sparkles } from "lucide-react";
 import { redirect } from "next/navigation";
 
@@ -131,7 +130,7 @@ export default async function Home({
               <Button
                 nativeButton={false}
                 className="h-12 w-full rounded-2xl bg-slate-950 text-white shadow-[0_16px_30px_rgba(15,23,42,0.18)] hover:bg-slate-800"
-                render={<Link href={getBootstrapPath(nextPath)} />}
+                render={<a href={getBootstrapPath(nextPath)} />}
               >
                 Continue anonymously
                 <ArrowRight className="size-4" />

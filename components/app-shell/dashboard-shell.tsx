@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { ArrowRight, LayoutDashboard } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -43,24 +42,15 @@ export function DashboardShell({ data }: { data: DashboardData }) {
     : defaultTemplate
       ? `${defaultTemplate.name} already has ${defaultTemplate.itemCount} items ready to tune before you plan the trip.`
       : "Create one template so every trip starts from a real packing list.";
-  const workspaceLabel = data.profile.authMode === "google" ? "Google workspace" : "Guest workspace";
   const hasTrips = data.trips.length > 0;
 
   return (
     <div className="space-y-6">
       <Card className="packing-panel-strong border-0">
         <CardHeader className="gap-5">
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge
-              variant="outline"
-              className="gap-1.5 border-white/20 bg-white/10 text-slate-50"
-            >
-              <LayoutDashboard className="size-3.5" />
-              Next action
-            </Badge>
-            <Badge variant="secondary" className="bg-white/15 text-slate-50">
-              {workspaceLabel}
-            </Badge>
+          <div className="flex flex-wrap items-center gap-2 text-slate-50">
+            <LayoutDashboard className="size-4" />
+            <span className="text-sm font-medium">Next action</span>
           </div>
 
           <div className="space-y-3">

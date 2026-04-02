@@ -26,7 +26,10 @@ export type SessionIdentity = {
   authMode: "anonymous" | "google";
   avatarUrl: string | null;
   email: string | null;
+  firstName: string | null;
+  fullName: string | null;
   label: string;
+  lastName: string | null;
   userId: string;
 };
 
@@ -86,18 +89,70 @@ function getAnonymousProfileLabel(userId: string) {
   return `Traveler ${userId.slice(0, 8)}`;
 }
 
+function formatEmailNameFallback(email: string | null) {
+  if (!email) {
+    return null;
+  }
+
+  const localPart = email.split("@")[0]?.trim();
+
+  if (!localPart) {
+    return null;
+  }
+
+  const normalized = localPart.replace(/[._-]+/g, " ").trim();
+
+  if (!normalized) {
+    return null;
+  }
+
+  return normalized
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((segment) => segment[0]?.toUpperCase() + segment.slice(1))
+    .join(" ");
+}
+
+function splitNameParts(value: string | null | undefined) {
+  const normalized = typeof value === "string" ? value.trim() : "";
+
+  if (!normalized) {
+    return {
+      firstName: null,
+      lastName: null,
+    };
+  }
+
+  const parts = normalized.split(/\s+/).filter(Boolean);
+
+  return {
+    firstName: parts[0] ?? null,
+    lastName: parts.slice(1).join(" ") || null,
+  };
+}
+
+function getAuthenticatedNameParts(user: User) {
+  const fullName = getMetadataStringValue(user.user_metadata, "full_name");
+  const givenName = getMetadataStringValue(user.user_metadata, "given_name");
+  const familyName = getMetadataStringValue(user.user_metadata, "family_name");
+  const email = typeof user.email === "string" ? user.email.trim() : null;
+  const emailName = formatEmailNameFallback(email);
+  const combinedName =
+    fullName || [givenName, familyName].filter(Boolean).join(" ").trim() || emailName;
+  const splitCombinedName = splitNameParts(combinedName);
+
+  return {
+    firstName: givenName || splitCombinedName.firstName,
+    fullName: combinedName || null,
+    lastName: familyName || splitCombinedName.lastName,
+  };
+}
+
 function getAuthenticatedProfileLabel(user: User) {
-  const fullName =
-    typeof user.user_metadata?.full_name === "string"
-      ? user.user_metadata.full_name.trim()
-      : null;
-  const givenName =
-    typeof user.user_metadata?.given_name === "string"
-      ? user.user_metadata.given_name.trim()
-      : null;
+  const { firstName, fullName } = getAuthenticatedNameParts(user);
   const email = typeof user.email === "string" ? user.email.trim() : null;
 
-  return fullName || givenName || email || `Traveler ${user.id.slice(0, 8)}`;
+  return fullName || firstName || email || `Traveler ${user.id.slice(0, 8)}`;
 }
 
 function getMetadataStringValue(
@@ -368,17 +423,25 @@ function createAnonymousSessionIdentity(userId: string): SessionIdentity {
     authMode: "anonymous",
     avatarUrl: null,
     email: null,
+    firstName: "Traveler",
+    fullName: getAnonymousProfileLabel(userId),
     label: getAnonymousProfileLabel(userId),
+    lastName: null,
     userId,
   };
 }
 
 export function createSessionIdentityFromAuthUser(user: User): SessionIdentity {
+  const nameParts = getAuthenticatedNameParts(user);
+
   return {
     authMode: "google",
     avatarUrl: getAuthenticatedAvatarUrl(user),
     email: user.email ?? null,
+    firstName: nameParts.firstName,
+    fullName: nameParts.fullName,
     label: getAuthenticatedProfileLabel(user),
+    lastName: nameParts.lastName,
     userId: user.id,
   };
 }

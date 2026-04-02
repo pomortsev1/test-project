@@ -22,7 +22,6 @@ import {
 import {
   addTemplateItem,
   deleteTemplate,
-  getCatalogSuggestions,
   removeTemplateItem,
   removeTemplateItems,
   renameTemplate,
@@ -48,6 +47,7 @@ const NEW_CATEGORY_VALUE = "__new_category__";
 type TemplateEditorProps = {
   detail: TemplateDetails;
   categories: CategoryOption[];
+  catalogSuggestions: CatalogSuggestion[];
   canMutate: boolean;
   issue?: string;
   supportsOptionalMeasurements: boolean;
@@ -66,6 +66,7 @@ type ItemRowProps = {
 type AddItemComposerProps = {
   templateId: string;
   categories: CategoryOption[];
+  catalogSuggestions: CatalogSuggestion[];
   canMutate: boolean;
   supportsOptionalMeasurements: boolean;
 };
@@ -350,15 +351,15 @@ function EditableTemplateItemRow({
 function AddTemplateItemComposer({
   templateId,
   categories,
+  catalogSuggestions,
   canMutate,
   supportsOptionalMeasurements,
 }: AddItemComposerProps) {
   const router = useRouter();
-  const requestIdRef = useRef(0);
+  const composerRef = useRef<HTMLDivElement | null>(null);
   const [query, setQuery] = useState("");
   const [selectedSuggestion, setSelectedSuggestion] =
     useState<CatalogSuggestion | null>(null);
-  const [suggestions, setSuggestions] = useState<CatalogSuggestion[]>([]);
   const [quantity, setQuantity] = useState(
     supportsOptionalMeasurements ? "" : "1",
   );
@@ -379,26 +380,18 @@ function AddTemplateItemComposer({
         ? rawSelectedCategoryValue
         : categories[0].id;
 
-  useEffect(() => {
-    let isCurrent = true;
-    const nextRequestId = requestIdRef.current + 1;
-    requestIdRef.current = nextRequestId;
-
-    const timeout = window.setTimeout(async () => {
-      const nextSuggestions = await getCatalogSuggestions(deferredSearchQuery);
-
-      if (!isCurrent || requestIdRef.current !== nextRequestId) {
-        return;
-      }
-
-      setSuggestions(nextSuggestions);
-    }, 180);
-
-    return () => {
-      isCurrent = false;
-      window.clearTimeout(timeout);
-    };
-  }, [deferredSearchQuery]);
+  const normalizedQuery = normalizeClientText(deferredSearchQuery);
+  const suggestions =
+    normalizedQuery.length === 0
+      ? []
+      : catalogSuggestions
+          .filter((suggestion) => {
+            return (
+              suggestion.normalizedName.includes(normalizedQuery) ||
+              normalizeClientText(suggestion.categoryName).includes(normalizedQuery)
+            );
+          })
+          .slice(0, 8);
 
   const isDisabled = !canMutate || isPending;
 
@@ -406,6 +399,35 @@ function AddTemplateItemComposer({
     selectedSuggestion !== null
       ? `${selectedSuggestion.categoryName} · ${scopeLabel(selectedSuggestion.scope)}`
       : null;
+  const isSuggestionsOpen =
+    query.trim().length > 0 && selectedSuggestion === null;
+
+  useEffect(() => {
+    if (!isSuggestionsOpen) {
+      return;
+    }
+
+    function handlePointerDown(event: MouseEvent | TouchEvent) {
+      const target = event.target;
+
+      if (!(target instanceof Node)) {
+        return;
+      }
+
+      if (!composerRef.current?.contains(target)) {
+        setQuery("");
+        setError(null);
+      }
+    }
+
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("touchstart", handlePointerDown);
+
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("touchstart", handlePointerDown);
+    };
+  }, [isSuggestionsOpen]);
 
   return (
     <Card className="border border-border/70 bg-card/92 shadow-sm">
@@ -425,7 +447,7 @@ function AddTemplateItemComposer({
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1.3fr)_120px_150px]">
-          <div className="space-y-2">
+          <div ref={composerRef} className="space-y-2">
             <label className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
               Item name
             </label>
@@ -451,7 +473,7 @@ function AddTemplateItemComposer({
               />
             </div>
 
-            {query.trim().length > 0 && (
+            {isSuggestionsOpen && (
               <div className="rounded-2xl border border-border/70 bg-background/90 p-2 shadow-sm">
                 {suggestions.length > 0 ? (
                   <div className="space-y-1">
@@ -471,8 +493,6 @@ function AddTemplateItemComposer({
                         }}
                         className={cn(
                           "flex w-full items-start justify-between gap-3 rounded-xl px-3 py-2 text-left transition hover:bg-muted disabled:cursor-not-allowed",
-                          selectedSuggestion?.id === suggestion.id &&
-                            "bg-muted ring-1 ring-foreground/10",
                         )}
                       >
                         <div>
@@ -644,7 +664,6 @@ function AddTemplateItemComposer({
 
                 setQuery("");
                 setSelectedSuggestion(null);
-                setSuggestions([]);
                 setQuantity(supportsOptionalMeasurements ? "" : "1");
                 setUnit("");
                 setNewCategoryName("");
@@ -672,6 +691,7 @@ function AddTemplateItemComposer({
 export function TemplateEditor({
   detail,
   categories,
+  catalogSuggestions,
   canMutate,
   issue,
   supportsOptionalMeasurements,
@@ -874,6 +894,7 @@ export function TemplateEditor({
       <AddTemplateItemComposer
         templateId={detail.template.id}
         categories={categories}
+        catalogSuggestions={catalogSuggestions}
         canMutate={canMutate}
         supportsOptionalMeasurements={supportsOptionalMeasurements}
       />
