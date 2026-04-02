@@ -1,12 +1,29 @@
 # App Flows
 
-## First Visit
+## Entry Choice
 1. User opens the app.
-2. Server checks for `packing_app_user_id` cookie.
+2. If a Google auth session already exists, render the authenticated workspace.
+3. Otherwise, if `packing_app_user_id` already exists, render the anonymous workspace.
+4. Otherwise, show an entry choice with:
+   - `Continue with Google`
+   - `Continue anonymously`
+
+## First Anonymous Visit
+1. User chooses anonymous mode.
+2. Server checks for `packing_app_user_id`.
 3. If missing, bootstrap endpoint or action creates a UUID cookie.
 4. Profile bootstrap ensures a `profiles` row exists.
 5. If the profile has no templates yet, create a user-owned default template copied from the system starter template.
 6. Render dashboard with templates and trips.
+
+## Google Sign-In
+1. User chooses Google sign-in.
+2. Browser starts Supabase OAuth with a callback route.
+3. Callback exchanges the authorization code for a Supabase auth session.
+4. If a valid anonymous cookie profile exists, merge that profile into the authenticated profile.
+5. Profile bootstrap ensures a `profiles` row exists for the authenticated user ID.
+6. Clear the anonymous cookie identity after a successful merge so future anonymous sessions start cleanly.
+7. Render dashboard with templates and trips for that authenticated profile.
 
 ## Template Creation
 1. User opens templates area.

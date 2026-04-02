@@ -3,9 +3,10 @@
 import { createBrowserClient } from "@supabase/ssr";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import type { Database } from "@/lib/supabase/database.types";
 import { getSupabaseEnv } from "@/lib/supabase/env";
 
-let browserClient: SupabaseClient | null = null;
+let browserClient: SupabaseClient<Database> | null = null;
 
 export function createSupabaseBrowserClient() {
   const { url, publishableKey, isConfigured } = getSupabaseEnv();
@@ -15,7 +16,11 @@ export function createSupabaseBrowserClient() {
   }
 
   if (!browserClient) {
-    browserClient = createBrowserClient(url, publishableKey);
+    browserClient = createBrowserClient(url, publishableKey, {
+      auth: {
+        detectSessionInUrl: false,
+      },
+    });
   }
 
   return browserClient;

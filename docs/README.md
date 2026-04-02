@@ -11,6 +11,13 @@ This folder is the execution kit for building the packing checklist travel app w
 6. Run Thread 04 with `docs/prompts/04-trips-active-journey.md`.
 7. Run the integration pass with `docs/prompts/05-coordinator-integration.md`.
 
+## Polish Follow-Up Run Order
+When continuing from the current foundation and implementing the new product-direction changes, use:
+1. `docs/prompts/08-measurements-and-seed-expansion.md`
+2. `docs/prompts/07-default-template-basic-mode.md`
+3. `docs/prompts/06-ui-polish-first-run.md`
+4. A final integration/QA pass using the existing coordinator prompt plus the new product spec
+
 This order works both sequentially and in parallel. If you run in parallel, freeze the shared contracts first and do not let worker threads edit outside their write scopes.
 
 ## Shared Rules For Every Thread
@@ -37,6 +44,9 @@ This order works both sequentially and in parallel. If you run in parallel, free
 - `codex/packing-templates-catalog`
 - `codex/packing-trips-journey`
 - `codex/packing-integration`
+- `codex/packing-measurements-seeds`
+- `codex/packing-default-template-basic-mode`
+- `codex/packing-ui-polish`
 
 ## Suggested Merge Order
 1. Data + domain
