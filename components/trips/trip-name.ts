@@ -19,17 +19,12 @@ export function buildTripNameFromDestinations(destinationNames: string[]) {
     .join(TRIP_ROUTE_SEPARATOR);
 }
 
-export function formatTripRoute(stopNames: Array<string | null | undefined>) {
-  return stopNames.filter((stopName): stopName is string => Boolean(stopName)).join(
-    TRIP_ROUTE_SEPARATOR,
-  );
+export function formatTripRoute(stopNames: string[]) {
+  return stopNames.join(TRIP_ROUTE_SEPARATOR);
 }
 
-export function formatTripLeg(
-  fromStopName: string | null | undefined,
-  toStopName: string | null | undefined,
-) {
-  return formatTripRoute([fromStopName, toStopName]);
+export function formatTripLeg(fromStopName: string, toStopName: string) {
+  return `${fromStopName}${TRIP_ROUTE_SEPARATOR}${toStopName}`;
 }
 
 export function resolveTripName(
