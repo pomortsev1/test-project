@@ -637,6 +637,63 @@ function assertTripName(name: string) {
   }
 }
 
+async function activateFirstTripLeg(
+  client: AppSupabaseClient,
+  userId: string,
+  tripId: string,
+  providedLegs?: LegRow[],
+) {
+  const legs = (providedLegs ?? (await loadLegsForTrip(client, tripId))).sort(
+    (left, right) => left.position - right.position,
+  );
+  const firstLeg = legs[0];
+
+  if (!firstLeg) {
+    throw new Error("Trip needs at least one leg before it can start.");
+  }
+
+  const { error: resetLegsError } = await client
+    .from("trip_legs")
+    .update({ status: "pending" })
+    .eq("trip_id", tripId);
+
+  if (resetLegsError) {
+    throw resetLegsError;
+  }
+
+  const { error: activateLegError } = await client
+    .from("trip_legs")
+    .update({ status: "active" })
+    .eq("id", firstLeg.id)
+    .eq("trip_id", tripId);
+
+  if (activateLegError) {
+    throw activateLegError;
+  }
+
+  const { error: resetChecksError } = await client
+    .from("trip_leg_item_checks")
+    .update({ is_packed: false, packed_at: null })
+    .eq("leg_id", firstLeg.id);
+
+  if (resetChecksError) {
+    throw resetChecksError;
+  }
+
+  const { error: tripUpdateError } = await client
+    .from("trips")
+    .update({
+      status: "active",
+      current_leg_index: firstLeg.position,
+    })
+    .eq("id", tripId)
+    .eq("profile_id", userId);
+
+  if (tripUpdateError) {
+    throw tripUpdateError;
+  }
+}
+
 export async function initializeTripsWorkspaceData() {
   const { client, userId } = await ensureWritableContext();
   await ensureProfileForUser(client, userId);
@@ -956,6 +1013,8 @@ export async function createTripData(input: CreateTripInput) {
         throw checkInsertError;
       }
     }
+
+    await activateFirstTripLeg(client, userId, createdTripId, insertedLegs ?? []);
   } catch (error) {
     if (tripId) {
       await client.from("trips").delete().eq("id", tripId).eq("profile_id", userId);
@@ -978,46 +1037,7 @@ export async function startTripData(input: StartTripInput) {
     throw new Error("Only draft trips can be started.");
   }
 
-  const legs = await loadLegsForTrip(client, trip.id);
-  const firstLeg = legs[0];
-
-  if (!firstLeg) {
-    throw new Error("Trip needs at least one leg before it can start.");
-  }
-
-  await client.from("trip_legs").update({ status: "pending" }).eq("trip_id", trip.id);
-
-  const { error: activateLegError } = await client
-    .from("trip_legs")
-    .update({ status: "active" })
-    .eq("id", firstLeg.id)
-    .eq("trip_id", trip.id);
-
-  if (activateLegError) {
-    throw activateLegError;
-  }
-
-  const { error: resetChecksError } = await client
-    .from("trip_leg_item_checks")
-    .update({ is_packed: false, packed_at: null })
-    .eq("leg_id", firstLeg.id);
-
-  if (resetChecksError) {
-    throw resetChecksError;
-  }
-
-  const { error: tripUpdateError } = await client
-    .from("trips")
-    .update({
-      status: "active",
-      current_leg_index: firstLeg.position,
-    })
-    .eq("id", trip.id)
-    .eq("profile_id", userId);
-
-  if (tripUpdateError) {
-    throw tripUpdateError;
-  }
+  await activateFirstTripLeg(client, userId, trip.id);
 
   return { tripId: trip.id };
 }

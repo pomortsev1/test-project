@@ -228,8 +228,8 @@ export function TripPlanner({ templates }: TripPlannerProps) {
 
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="text-sm text-muted-foreground">
-            Items are copied when you create the trip, so later template edits
-            won&apos;t change this checklist.
+            Items are copied when you create the trip, and the first checklist leg
+            starts right away, so later template edits won&apos;t change this checklist.
           </p>
           <Button
             type="button"
@@ -260,7 +260,7 @@ export function TripPlanner({ templates }: TripPlannerProps) {
               });
             }}
           >
-            {isPending ? "Creating trip..." : "Create trip"}
+            {isPending ? "Creating and starting trip..." : "Create and start trip"}
           </Button>
         </div>
       </CardContent>
