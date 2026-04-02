@@ -1,9 +1,12 @@
 "use client";
 
+import { useState, useTransition } from "react";
 import { LogIn } from "lucide-react";
 import type { VariantProps } from "class-variance-authority";
 
 import { Button, buttonVariants } from "@/components/ui/button";
+import { PACKING_APP_AUTH_NEXT_COOKIE } from "@/lib/domain/constants";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 type GoogleSignInButtonProps = {
   className?: string;
@@ -22,21 +25,78 @@ export function GoogleSignInButton({
   size = "default",
   variant = "default",
 }: GoogleSignInButtonProps) {
-  const authUrl = `/auth/google?next=${encodeURIComponent(nextPath)}`;
+  const [error, setError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+  const isDisabled = disabled || isPending;
 
   return (
-    <Button
-      type="button"
-      variant={variant}
-      size={size}
-      disabled={disabled}
-      className={className}
-      onClick={() => {
-        window.location.assign(authUrl);
-      }}
-    >
-      <LogIn className="size-4" />
-      {label}
-    </Button>
+    <div className="space-y-2">
+      <Button
+        type="button"
+        variant={variant}
+        size={size}
+        disabled={isDisabled}
+        className={className}
+        onClick={() => {
+          setError(null);
+
+          startTransition(async () => {
+            const supabase = createSupabaseBrowserClient();
+
+            if (!supabase) {
+              setError(
+                "Supabase is not configured yet, so Google sign-in is unavailable in this environment."
+              );
+              return;
+            }
+
+            const redirectTo = new URL("/auth/callback", window.location.origin);
+            document.cookie = `${PACKING_APP_AUTH_NEXT_COOKIE}=${encodeURIComponent(
+              nextPath
+            )}; Path=/; SameSite=Lax; Max-Age=600`;
+            const cookieNames = document.cookie
+              .split(";")
+              .map((cookie) => cookie.trim().split("=")[0])
+              .filter(Boolean);
+            console.info("[google-auth] starting oauth", {
+              cookieNames,
+              nextPath,
+              origin: window.location.origin,
+              redirectTo: redirectTo.toString(),
+            });
+
+            const { data, error: signInError } = await supabase.auth.signInWithOAuth({
+              provider: "google",
+              options: {
+                redirectTo: redirectTo.toString(),
+              },
+            });
+
+            if (signInError) {
+              console.error("[google-auth] signInWithOAuth failed", {
+                message: signInError.message,
+              });
+              setError(signInError.message);
+              return;
+            }
+
+            if (data.url == null) {
+              console.error("[google-auth] signInWithOAuth returned no url");
+              setError("Google sign-in could not start because no redirect URL was returned.");
+              return;
+            }
+
+            console.info("[google-auth] oauth redirect prepared", {
+              url: data.url,
+            });
+          });
+        }}
+      >
+        <LogIn className="size-4" />
+        {label}
+      </Button>
+
+      {error ? <p className="text-sm text-destructive">{error}</p> : null}
+    </div>
   );
 }

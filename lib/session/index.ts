@@ -166,15 +166,7 @@ export function getSafeNextPath(nextPath: string | null | undefined, fallback = 
     return fallback;
   }
 
-  if (nextPath.startsWith("/auth/google")) {
-    return fallback;
-  }
-
   if (nextPath.startsWith("/auth/callback")) {
-    return fallback;
-  }
-
-  if (nextPath.startsWith("/auth/finalize")) {
     return fallback;
   }
 
@@ -275,16 +267,21 @@ export async function requireCurrentUserId(nextPath: string) {
 
 export async function ensureProfileForUserId(
   userId: string,
-  identity = createAnonymousSessionIdentity(userId)
+  identity?: SessionIdentity
 ): Promise<SessionProfile> {
+  const currentIdentity = identity ? null : await getCurrentSessionIdentity();
+  const resolvedIdentity =
+    identity ??
+    (currentIdentity?.userId === userId ? currentIdentity : null) ??
+    createAnonymousSessionIdentity(userId);
   const supabase = await createSupabaseServerClient();
 
   if (!supabase) {
     return {
-      authMode: identity.authMode,
-      email: identity.email,
+      authMode: resolvedIdentity.authMode,
+      email: resolvedIdentity.email,
       id: userId,
-      displayName: identity.label,
+      displayName: resolvedIdentity.label,
       source: "degraded",
       notes: [
         "Supabase is not configured yet, so the current profile cannot be persisted in the database.",
@@ -292,7 +289,7 @@ export async function ensureProfileForUserId(
     };
   }
 
-  const identityProfileFields = getIdentityProfileFields(identity);
+  const identityProfileFields = getIdentityProfileFields(resolvedIdentity);
   const existingProfileResult = await supabase
     .from("profiles")
     .select("id, display_name, email")
@@ -303,10 +300,10 @@ export async function ensureProfileForUserId(
 
   if (existingProfileError) {
     return {
-      authMode: identity.authMode,
-      email: identity.email,
+      authMode: resolvedIdentity.authMode,
+      email: resolvedIdentity.email,
       id: userId,
-      displayName: identity.label,
+      displayName: resolvedIdentity.label,
       source: "degraded",
       notes: [
         `We could not look up the current profile row yet: ${getErrorMessage(
@@ -327,10 +324,10 @@ export async function ensureProfileForUserId(
 
     if (insertProfileError) {
       return {
-        authMode: identity.authMode,
-        email: identity.email,
+        authMode: resolvedIdentity.authMode,
+        email: resolvedIdentity.email,
         id: userId,
-        displayName: identity.label,
+        displayName: resolvedIdentity.label,
         source: "degraded",
         notes: [
           `We generated the session, but profile bootstrap is still pending: ${getErrorMessage(
@@ -340,8 +337,9 @@ export async function ensureProfileForUserId(
       };
     }
   } else if (
-    existingProfile.display_name !== identityProfileFields.displayName ||
-    existingProfile.email !== identityProfileFields.email
+    resolvedIdentity.authMode === "google" &&
+    (existingProfile.display_name !== identityProfileFields.displayName ||
+      existingProfile.email !== identityProfileFields.email)
   ) {
     const { error: updateProfileError } = await supabase
       .from("profiles")
@@ -353,10 +351,10 @@ export async function ensureProfileForUserId(
 
     if (updateProfileError) {
       return {
-        authMode: identity.authMode,
-        email: identity.email,
+        authMode: resolvedIdentity.authMode,
+        email: resolvedIdentity.email,
         id: userId,
-        displayName: identity.label,
+        displayName: resolvedIdentity.label,
         source: "degraded",
         notes: [
           `We found the current profile, but could not refresh the saved account details: ${getErrorMessage(
@@ -368,11 +366,18 @@ export async function ensureProfileForUserId(
   }
 
   const resolvedDisplayName =
-    existingProfile?.display_name ?? identityProfileFields.displayName ?? identity.label;
-  const resolvedEmail = existingProfile?.email ?? identityProfileFields.email ?? identity.email;
+    resolvedIdentity.authMode === "google"
+      ? identityProfileFields.displayName ??
+        existingProfile?.display_name ??
+        resolvedIdentity.label
+      : existingProfile?.display_name ?? resolvedIdentity.label;
+  const resolvedEmail =
+    resolvedIdentity.authMode === "google"
+      ? identityProfileFields.email ?? existingProfile?.email ?? resolvedIdentity.email
+      : existingProfile?.email ?? resolvedIdentity.email;
 
   return {
-    authMode: identity.authMode,
+    authMode: resolvedIdentity.authMode,
     email: resolvedEmail,
     id: userId,
     displayName: resolvedDisplayName,

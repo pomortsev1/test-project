@@ -1,4 +1,5 @@
 export const PACKING_APP_USER_ID_COOKIE = "packing_app_user_id";
+export const PACKING_APP_AUTH_NEXT_COOKIE = "packing_app_auth_next";
 export const STARTER_TEMPLATE_NAME = "Starter Template";
 export const HOME_STOP_NAME = "Home";
 

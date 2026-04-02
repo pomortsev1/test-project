@@ -35,6 +35,9 @@ export default async function Home({
   const providerErrorDescriptionValue = Array.isArray(params.error_description)
     ? params.error_description[0]
     : params.error_description;
+  const authErrorValue = Array.isArray(params.authError)
+    ? params.authError[0]
+    : params.authError;
   const nextValue = Array.isArray(params.next) ? params.next[0] : params.next;
   const nextPath = getSafeNextPath(nextValue, "/dashboard");
 
@@ -57,13 +60,9 @@ export default async function Home({
     redirect(callbackUrl.pathname + callbackUrl.search);
   }
 
-  if (identity) {
+  if (identity && !authErrorValue) {
     redirect("/dashboard");
   }
-
-  const authErrorValue = Array.isArray(params.authError)
-    ? params.authError[0]
-    : params.authError;
   const isSupabaseConfigured = getSupabaseEnv().isConfigured;
 
   return (
