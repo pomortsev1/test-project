@@ -79,16 +79,28 @@ export function AppShellLayout({
                     label="Add Google sign-in"
                   />
                 ) : (
-                  <Button
-                    nativeButton={false}
-                    variant="outline"
-                    size="sm"
-                    className="rounded-full border-slate-200 bg-white/[0.85]"
-                    render={<Link href="/auth/signout?mode=anonymous&next=/dashboard" />}
-                  >
-                    <LogOut className="size-3.5" />
-                    Switch to guest
-                  </Button>
+                  <>
+                    <Button
+                      nativeButton={false}
+                      variant="outline"
+                      size="sm"
+                      className="rounded-full border-slate-200 bg-white/[0.85]"
+                      render={<Link href="/auth/signout?next=/dashboard" />}
+                    >
+                      <LogOut className="size-3.5" />
+                      Log out
+                    </Button>
+
+                    <Button
+                      nativeButton={false}
+                      variant="outline"
+                      size="sm"
+                      className="rounded-full border-slate-200 bg-white/[0.85]"
+                      render={<Link href="/auth/signout?mode=anonymous&next=/dashboard" />}
+                    >
+                      Switch to guest
+                    </Button>
+                  </>
                 )}
 
                 {!isSupabaseConfigured && !isGoogleSession ? (

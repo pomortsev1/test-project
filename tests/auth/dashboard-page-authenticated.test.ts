@@ -122,5 +122,7 @@ describe("/dashboard authenticated render", () => {
     expect(html).toContain("Traveler Example");
     expect(html).toContain("traveler@example.com");
     expect(html).toContain("Packmap");
+    expect(html).toContain("Log out");
+    expect(html).toContain("Switch to guest");
   });
 });
