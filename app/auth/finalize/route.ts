@@ -12,8 +12,9 @@ import {
 import {
   createSessionIdentityFromAuthUser,
   getAuthChoicePath,
-  getSafeNextPath,
   isSessionUserId,
+  getSafeNextPath,
+  upsertProfileForIdentity,
 } from "@/lib/session";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -85,17 +86,10 @@ export async function GET(request: NextRequest) {
 
   try {
     const identity = createSessionIdentityFromAuthUser(user);
-    const { error: profileError } = await supabase.from("profiles").upsert(
-      {
-        id: user.id,
-        display_name:
-          identity.authMode === "google" ? identity.label.trim() || null : null,
-        email:
-          identity.authMode === "google" && identity.email
-            ? identity.email.trim().toLowerCase()
-            : null,
-      },
-      { onConflict: "id" }
+    const { error: profileError } = await upsertProfileForIdentity(
+      supabase,
+      user.id,
+      identity
     );
 
     if (profileError) {
@@ -103,6 +97,7 @@ export async function GET(request: NextRequest) {
     }
 
     console.info("[google-auth] profile upserted", {
+      avatarUrl: identity.avatarUrl,
       email: identity.email,
       userId: user.id,
     });
@@ -136,7 +131,7 @@ export async function GET(request: NextRequest) {
     }
   } catch (error) {
     console.error("[google-auth] finalize failed", {
-      message: error 
+      message: error instanceof Error ? error.message : String(error),
     });
     return NextResponse.redirect(
       getErrorRedirectUrl(

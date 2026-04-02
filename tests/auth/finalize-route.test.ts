@@ -39,6 +39,7 @@ describe("GET /auth/finalize", () => {
           id: googleUserId,
           email: "traveler@example.com",
           user_metadata: {
+            avatar_url: "https://lh3.googleusercontent.com/a/avatar-1",
             full_name: "Traveler Example",
           },
         },
@@ -71,6 +72,7 @@ describe("GET /auth/finalize", () => {
     expect(upsert).toHaveBeenCalledWith(
       {
         id: googleUserId,
+        avatar_url: "https://lh3.googleusercontent.com/a/avatar-1",
         display_name: "Traveler Example",
         email: "traveler@example.com",
       },
@@ -104,6 +106,7 @@ describe("GET /auth/finalize", () => {
               email: "traveler@example.com",
               user_metadata: {
                 full_name: "Traveler Example",
+                picture: "https://lh3.googleusercontent.com/a/avatar-2",
               },
             },
           },
@@ -120,6 +123,74 @@ describe("GET /auth/finalize", () => {
 
     expect(response.headers.get("location")).toBe("http://localhost/dashboard");
     expect(upsert).toHaveBeenCalledTimes(1);
+    expect(upsert).toHaveBeenCalledWith(
+      {
+        id: googleUserId,
+        avatar_url: "https://lh3.googleusercontent.com/a/avatar-2",
+        display_name: "Traveler Example",
+        email: "traveler@example.com",
+      },
+      { onConflict: "id" }
+    );
     expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it("falls back to the legacy profile payload when avatar_url is unavailable", async () => {
+    const upsert = vi
+      .fn()
+      .mockResolvedValueOnce({
+        error: {
+          code: "42703",
+          details: null,
+          hint: null,
+          message: 'column "avatar_url" of relation "profiles" does not exist',
+        },
+      })
+      .mockResolvedValueOnce({ error: null });
+
+    createSupabaseServerClient.mockResolvedValue({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: {
+            user: {
+              id: googleUserId,
+              email: "traveler@example.com",
+              user_metadata: {
+                avatar_url: "https://lh3.googleusercontent.com/a/avatar-3",
+                full_name: "Traveler Example",
+              },
+            },
+          },
+          error: null,
+        }),
+      },
+      from: vi.fn(() => ({
+        upsert,
+      })),
+      rpc: vi.fn(),
+    });
+
+    const response = await GET(createRequest());
+
+    expect(response.headers.get("location")).toBe("http://localhost/dashboard");
+    expect(upsert).toHaveBeenNthCalledWith(
+      1,
+      {
+        id: googleUserId,
+        avatar_url: "https://lh3.googleusercontent.com/a/avatar-3",
+        display_name: "Traveler Example",
+        email: "traveler@example.com",
+      },
+      { onConflict: "id" }
+    );
+    expect(upsert).toHaveBeenNthCalledWith(
+      2,
+      {
+        id: googleUserId,
+        display_name: "Traveler Example",
+        email: "traveler@example.com",
+      },
+      { onConflict: "id" }
+    );
   });
 });

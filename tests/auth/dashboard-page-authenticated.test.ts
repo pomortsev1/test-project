@@ -105,6 +105,7 @@ describe("/dashboard authenticated render", () => {
   it("shows the authenticated user's name and email on the dashboard page", async () => {
     const sessionIdentity: SessionIdentity = {
       authMode: "google",
+      avatarUrl: "https://lh3.googleusercontent.com/a/avatar-session",
       email: "traveler@example.com",
       label: "Traveler Example",
       userId: "22222222-2222-4222-8222-222222222222",

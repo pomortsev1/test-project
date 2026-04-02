@@ -7,6 +7,7 @@ import {
   STARTER_TEMPLATE_NAME,
 } from "@/lib/domain/constants";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import type { TypedSupabaseClient } from "@/lib/supabase/types";
 
 const COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 365;
 const UUID_PATTERN =
@@ -23,6 +24,7 @@ export type SessionProfile = {
 
 export type SessionIdentity = {
   authMode: "anonymous" | "google";
+  avatarUrl: string | null;
   email: string | null;
   label: string;
   userId: string;
@@ -54,6 +56,7 @@ export type AppShellData = {
 };
 
 type ProfileRow = {
+  avatar_url: string | null;
   display_name: string | null;
   email: string | null;
   id: string;
@@ -97,8 +100,29 @@ function getAuthenticatedProfileLabel(user: User) {
   return fullName || givenName || email || `Traveler ${user.id.slice(0, 8)}`;
 }
 
-function getIdentityProfileFields(identity: SessionIdentity) {
+function getMetadataStringValue(
+  metadata: User["user_metadata"],
+  key: string,
+) {
+  const value = metadata?.[key];
+
+  return typeof value === "string" ? value.trim() || null : null;
+}
+
+function getAuthenticatedAvatarUrl(user: User) {
+  const metadata = user.user_metadata;
+
+  return (
+    getMetadataStringValue(metadata, "avatar_url") ??
+    getMetadataStringValue(metadata, "picture") ??
+    getMetadataStringValue(metadata, "picture_url")
+  );
+}
+
+export function getIdentityProfileFields(identity: SessionIdentity) {
   return {
+    avatarUrl:
+      identity.authMode === "google" ? identity.avatarUrl?.trim() || null : null,
     displayName:
       identity.authMode === "google" ? identity.label.trim() || null : null,
     email:
@@ -126,6 +150,145 @@ function getErrorMessage(error: unknown) {
   }
 
   return "Unknown error";
+}
+
+function isMissingAvatarUrlColumnError(error: unknown) {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+
+  const code =
+    "code" in error && typeof error.code === "string" ? error.code : null;
+  const message = getErrorMessage(error).toLowerCase();
+  const details =
+    "details" in error && typeof error.details === "string"
+      ? error.details.toLowerCase()
+      : "";
+  const hint =
+    "hint" in error && typeof error.hint === "string" ? error.hint.toLowerCase() : "";
+  const combined = `${message} ${details} ${hint}`;
+
+  return (
+    code === "42703" ||
+    (combined.includes("avatar_url") &&
+      (combined.includes("column") ||
+        combined.includes("schema cache") ||
+        combined.includes("profiles")))
+  );
+}
+
+function getProfileWritePayload(userId: string, identity: SessionIdentity) {
+  const fields = getIdentityProfileFields(identity);
+
+  return {
+    withAvatar: {
+      id: userId,
+      avatar_url: fields.avatarUrl,
+      display_name: fields.displayName,
+      email: fields.email,
+    },
+    withoutAvatar: {
+      id: userId,
+      display_name: fields.displayName,
+      email: fields.email,
+    },
+  };
+}
+
+async function selectProfileRow(
+  supabase: TypedSupabaseClient,
+  userId: string,
+) {
+  const result = await supabase
+    .from("profiles")
+    .select("id, avatar_url, display_name, email")
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (!result.error || !isMissingAvatarUrlColumnError(result.error)) {
+    return {
+      data: result.data as ProfileRow | null,
+      error: result.error,
+    };
+  }
+
+  const fallbackResult = await supabase
+    .from("profiles")
+    .select("id, display_name, email")
+    .eq("id", userId)
+    .maybeSingle();
+
+  return {
+    data: fallbackResult.data
+      ? ({
+          ...fallbackResult.data,
+          avatar_url: null,
+        } as ProfileRow)
+      : null,
+    error: fallbackResult.error,
+  };
+}
+
+export async function upsertProfileForIdentity(
+  supabase: TypedSupabaseClient,
+  userId: string,
+  identity: SessionIdentity,
+) {
+  const payload = getProfileWritePayload(userId, identity);
+  const result = await supabase
+    .from("profiles")
+    .upsert(payload.withAvatar, { onConflict: "id" });
+
+  if (!result.error || !isMissingAvatarUrlColumnError(result.error)) {
+    return result;
+  }
+
+  return supabase
+    .from("profiles")
+    .upsert(payload.withoutAvatar, { onConflict: "id" });
+}
+
+async function insertProfileForIdentity(
+  supabase: TypedSupabaseClient,
+  userId: string,
+  identity: SessionIdentity,
+) {
+  const payload = getProfileWritePayload(userId, identity);
+  const result = await supabase.from("profiles").insert(payload.withAvatar);
+
+  if (!result.error || !isMissingAvatarUrlColumnError(result.error)) {
+    return result;
+  }
+
+  return supabase.from("profiles").insert(payload.withoutAvatar);
+}
+
+async function updateProfileForIdentity(
+  supabase: TypedSupabaseClient,
+  userId: string,
+  identity: SessionIdentity,
+) {
+  const payload = getProfileWritePayload(userId, identity);
+  const result = await supabase
+    .from("profiles")
+    .update({
+      avatar_url: payload.withAvatar.avatar_url,
+      display_name: payload.withAvatar.display_name,
+      email: payload.withAvatar.email,
+    })
+    .eq("id", userId);
+
+  if (!result.error || !isMissingAvatarUrlColumnError(result.error)) {
+    return result;
+  }
+
+  return supabase
+    .from("profiles")
+    .update({
+      display_name: payload.withAvatar.display_name,
+      email: payload.withAvatar.email,
+    })
+    .eq("id", userId);
 }
 
 function mapTrip(row: TripRow): SessionTripSummary {
@@ -203,6 +366,7 @@ async function getCurrentAnonymousUserId() {
 function createAnonymousSessionIdentity(userId: string): SessionIdentity {
   return {
     authMode: "anonymous",
+    avatarUrl: null,
     email: null,
     label: getAnonymousProfileLabel(userId),
     userId,
@@ -212,6 +376,7 @@ function createAnonymousSessionIdentity(userId: string): SessionIdentity {
 export function createSessionIdentityFromAuthUser(user: User): SessionIdentity {
   return {
     authMode: "google",
+    avatarUrl: getAuthenticatedAvatarUrl(user),
     email: user.email ?? null,
     label: getAuthenticatedProfileLabel(user),
     userId: user.id,
@@ -320,12 +485,8 @@ export async function ensureProfileForUserId(
   }
 
   const identityProfileFields = getIdentityProfileFields(resolvedIdentity);
-  const existingProfileResult = await supabase
-    .from("profiles")
-    .select("id, display_name, email")
-    .eq("id", userId)
-    .maybeSingle();
-  const existingProfile = existingProfileResult.data as ProfileRow | null;
+  const existingProfileResult = await selectProfileRow(supabase, userId);
+  const existingProfile = existingProfileResult.data;
   const existingProfileError = existingProfileResult.error;
 
   if (existingProfileError) {
@@ -344,13 +505,11 @@ export async function ensureProfileForUserId(
   }
 
   if (!existingProfile) {
-    const { error: insertProfileError } = await supabase
-      .from("profiles")
-      .insert({
-        id: userId,
-        display_name: identityProfileFields.displayName,
-        email: identityProfileFields.email,
-      });
+    const { error: insertProfileError } = await insertProfileForIdentity(
+      supabase,
+      userId,
+      resolvedIdentity,
+    );
 
     if (insertProfileError) {
       return {
@@ -368,16 +527,15 @@ export async function ensureProfileForUserId(
     }
   } else if (
     resolvedIdentity.authMode === "google" &&
-    (existingProfile.display_name !== identityProfileFields.displayName ||
+    (existingProfile.avatar_url !== identityProfileFields.avatarUrl ||
+      existingProfile.display_name !== identityProfileFields.displayName ||
       existingProfile.email !== identityProfileFields.email)
   ) {
-    const { error: updateProfileError } = await supabase
-      .from("profiles")
-      .update({
-        display_name: identityProfileFields.displayName,
-        email: identityProfileFields.email,
-      })
-      .eq("id", userId);
+    const { error: updateProfileError } = await updateProfileForIdentity(
+      supabase,
+      userId,
+      resolvedIdentity,
+    );
 
     if (updateProfileError) {
       return {
